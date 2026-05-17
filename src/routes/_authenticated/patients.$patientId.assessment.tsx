@@ -75,18 +75,19 @@ function AssessmentPage() {
     supabase.from("participant_assessments").select("*").eq("patient_id", patientId).eq("status", "draft").order("updated_at", { ascending: false }).limit(1).maybeSingle().then(({ data }) => {
       if (data) {
         setDraftId(data.id);
+        const d = data as any;
         setForm({
           ...EMPTY,
-          visit_type: data.visit_type ?? EMPTY.visit_type,
-          assessment_date: data.assessment_date ?? EMPTY.assessment_date,
-          general_condition: data.general_condition ?? EMPTY.general_condition,
-          vitals: data.vitals ?? {}, weight: data.weight ?? {}, diet: data.diet ?? {},
-          respiratory: data.respiratory ?? {}, cardiovascular: data.cardiovascular ?? {},
-          gastrointestinal: data.gastrointestinal ?? {}, genitourinary: data.genitourinary ?? {},
-          neurological: data.neurological ?? {}, musculoskeletal: data.musculoskeletal ?? {},
-          skin: data.skin ?? {}, sensory: data.sensory ?? {}, mental_health: data.mental_health ?? {},
-          psychosocial: data.psychosocial ?? {}, pain: data.pain ?? {},
-          medication_management: data.medication_management ?? "", caregiver_names: data.caregiver_names ?? "", notes: data.notes ?? "",
+          visit_type: d.visit_type ?? EMPTY.visit_type,
+          assessment_date: d.assessment_date ?? EMPTY.assessment_date,
+          general_condition: d.general_condition ?? EMPTY.general_condition,
+          vitals: d.vitals ?? {}, weight: d.weight ?? {}, diet: d.diet ?? {},
+          respiratory: d.respiratory ?? {}, cardiovascular: d.cardiovascular ?? {},
+          gastrointestinal: d.gastrointestinal ?? {}, genitourinary: d.genitourinary ?? {},
+          neurological: d.neurological ?? {}, musculoskeletal: d.musculoskeletal ?? {},
+          skin: d.skin ?? {}, sensory: d.sensory ?? {}, mental_health: d.mental_health ?? {},
+          psychosocial: d.psychosocial ?? {}, pain: d.pain ?? {},
+          medication_management: d.medication_management ?? "", caregiver_names: d.caregiver_names ?? "", notes: d.notes ?? "",
         });
       }
     });
