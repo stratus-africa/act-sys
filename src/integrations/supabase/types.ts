@@ -80,6 +80,63 @@ export type Database = {
         }
         Relationships: []
       }
+      caregiver_assessments: {
+        Row: {
+          caregiver_id: string | null
+          caregiver_name: string | null
+          caregiver_signature_typed: string | null
+          caregiver_signature_url: string | null
+          created_at: string
+          general_notes: string | null
+          id: string
+          nurse_id: string | null
+          nurse_name: string | null
+          nurse_signature_typed: string | null
+          nurse_signature_url: string | null
+          patient_id: string
+          service_date: string
+          signed_at: string | null
+          tasks: Json
+          updated_at: string
+        }
+        Insert: {
+          caregiver_id?: string | null
+          caregiver_name?: string | null
+          caregiver_signature_typed?: string | null
+          caregiver_signature_url?: string | null
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          nurse_id?: string | null
+          nurse_name?: string | null
+          nurse_signature_typed?: string | null
+          nurse_signature_url?: string | null
+          patient_id: string
+          service_date?: string
+          signed_at?: string | null
+          tasks?: Json
+          updated_at?: string
+        }
+        Update: {
+          caregiver_id?: string | null
+          caregiver_name?: string | null
+          caregiver_signature_typed?: string | null
+          caregiver_signature_url?: string | null
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          nurse_id?: string | null
+          nurse_name?: string | null
+          nurse_signature_typed?: string | null
+          nurse_signature_url?: string | null
+          patient_id?: string
+          service_date?: string
+          signed_at?: string | null
+          tasks?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_signatures: {
         Row: {
           created_at: string

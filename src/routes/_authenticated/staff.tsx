@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
@@ -159,7 +159,11 @@ function StaffPage() {
                   const unassigned = ROLES.filter((r) => !userRoles.includes(r));
                   return (
                     <tr key={p.id}>
-                      <td className="px-4 py-3 font-semibold">{p.full_name ?? "—"}</td>
+                      <td className="px-4 py-3 font-semibold">
+                        <Link to="/staff/$staffId" params={{ staffId: p.id }} className="hover:underline">
+                          {p.full_name ?? "—"}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3 font-mono text-xs">{p.email ?? "—"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
