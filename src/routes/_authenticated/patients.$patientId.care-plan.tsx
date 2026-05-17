@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { Check, Trash2, Plus } from "lucide-react";
+import { Check, Trash2, Plus, History } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/care-plan")({ component: CarePlan });
 
 type Task = { id: string; title: string; category: string | null; frequency: string | null; active: boolean; created_at: string };
-type Completion = { id: string; task_id: string; completed_at: string; notes: string | null };
+type Completion = { id: string; task_id: string; completed_at: string; notes: string | null; completed_by: string | null };
 
 function CarePlan() {
   const { patientId } = Route.useParams();
@@ -23,6 +23,9 @@ function CarePlan() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("ADL");
   const [frequency, setFrequency] = useState("daily");
+  const [completeTarget, setCompleteTarget] = useState<Task | null>(null);
+  const [completeNotes, setCompleteNotes] = useState("");
+  const [historyTarget, setHistoryTarget] = useState<Task | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,10 +63,17 @@ function CarePlan() {
     load();
   };
 
-  const completeTask = async (t: Task) => {
-    const { error } = await supabase.from("task_completions").insert({ task_id: t.id, patient_id: patientId, completed_by: user?.id });
+  const openComplete = (t: Task) => { setCompleteTarget(t); setCompleteNotes(""); };
+  const submitComplete = async () => {
+    if (!completeTarget) return;
+    const { error } = await supabase.from("task_completions").insert({
+      task_id: completeTarget.id, patient_id: patientId, completed_by: user?.id,
+      notes: completeNotes.trim() || null,
+    });
     if (error) return toast.error(error.message);
-    toast.success(`Marked "${t.title}" complete`);
+    toast.success(`Marked "${completeTarget.title}" complete`);
+    setCompleteTarget(null);
+    setCompleteNotes("");
     load();
   };
 
@@ -113,7 +123,7 @@ function CarePlan() {
                 <li key={t.id} className="px-6 py-4 flex items-center gap-4">
                   <button
                     disabled={!canComplete || done}
-                    onClick={() => completeTask(t)}
+                    onClick={() => openComplete(t)}
                     className={"size-8 rounded-full border-2 grid place-items-center transition-colors " + (done ? "bg-primary border-primary text-primary-foreground" : "border-border hover:border-primary disabled:opacity-30")}
                   >
                     {done && <Check className="size-4" />}
@@ -125,6 +135,7 @@ function CarePlan() {
                       {last && <span>Last: {new Date(last.completed_at).toLocaleString()}</span>}
                     </div>
                   </div>
+                  <button onClick={() => setHistoryTarget(t)} className="text-muted-foreground hover:text-foreground p-1" title="View history"><History className="size-4" /></button>
                   {canEdit && (
                     <div className="flex gap-1">
                       <button onClick={() => toggleActive(t)} className="text-[10px] font-mono uppercase text-muted-foreground hover:text-foreground px-2 py-1">Archive</button>
@@ -155,19 +166,69 @@ function CarePlan() {
       <div className="border border-border bg-card">
         <div className="px-6 py-4 border-b border-border"><h3 className="text-xs font-bold uppercase tracking-widest">Recent Completions</h3></div>
         {completions.length === 0 ? <div className="p-6 text-xs text-muted-foreground text-center">No completions yet.</div> : (
-          <ul className="divide-y divide-border max-h-72 overflow-y-auto">
-            {completions.slice(0, 30).map((c) => {
+          <ul className="divide-y divide-border max-h-96 overflow-y-auto">
+            {completions.slice(0, 50).map((c) => {
               const task = tasks.find((t) => t.id === c.task_id);
               return (
-                <li key={c.id} className="px-6 py-2.5 flex items-center justify-between text-sm">
-                  <span>{task?.title ?? "—"}</span>
-                  <span className="text-[10px] font-mono uppercase text-muted-foreground">{new Date(c.completed_at).toLocaleString()}</span>
+                <li key={c.id} className="px-6 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium">{task?.title ?? "—"}</span>
+                    <span className="text-[10px] font-mono uppercase text-muted-foreground shrink-0">{new Date(c.completed_at).toLocaleString()}</span>
+                  </div>
+                  {c.notes && <div className="text-xs text-muted-foreground mt-1 italic">"{c.notes}"</div>}
                 </li>
               );
             })}
           </ul>
         )}
       </div>
+
+      {completeTarget && (
+        <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setCompleteTarget(null)}>
+          <div className="bg-card border border-border w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-bold">Mark complete</h3>
+            <div className="text-sm">{completeTarget.title}</div>
+            <div>
+              <FieldLabel>Notes (optional)</FieldLabel>
+              <textarea value={completeNotes} onChange={(e) => setCompleteNotes(e.target.value)} rows={3} className="w-full px-3 py-2 border border-border bg-background text-sm" placeholder="Observations, follow-up, etc." />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setCompleteTarget(null)} className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground hover:text-foreground">Cancel</button>
+              <button onClick={submitComplete} className="bg-primary text-primary-foreground px-4 py-2 text-sm font-bold">Confirm complete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {historyTarget && (
+        <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setHistoryTarget(null)}>
+          <div className="bg-card border border-border w-full max-w-lg max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-mono uppercase text-muted-foreground">Completion History</div>
+                <h3 className="text-sm font-bold">{historyTarget.title}</h3>
+              </div>
+              <button onClick={() => setHistoryTarget(null)} className="text-muted-foreground hover:text-foreground text-sm">✕</button>
+            </div>
+            <div className="overflow-y-auto">
+              {(() => {
+                const taskHist = completions.filter((c) => c.task_id === historyTarget.id);
+                if (taskHist.length === 0) return <div className="p-6 text-xs text-muted-foreground text-center">No completions yet.</div>;
+                return (
+                  <ul className="divide-y divide-border">
+                    {taskHist.map((c) => (
+                      <li key={c.id} className="px-6 py-3 text-sm">
+                        <div className="font-mono text-xs text-muted-foreground">{new Date(c.completed_at).toLocaleString()}</div>
+                        {c.notes && <div className="text-sm mt-1">{c.notes}</div>}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

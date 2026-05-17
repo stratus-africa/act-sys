@@ -30,6 +30,8 @@ function Visits() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [type, setType] = useState("routine");
+  const [actionTarget, setActionTarget] = useState<{ visit: Visit; nextStatus: "in_progress" | "completed" } | null>(null);
+  const [actionNotes, setActionNotes] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,11 +51,32 @@ function Visits() {
     load();
   };
 
-  const updateStatus = async (v: Visit, status: string) => {
-    const patch: any = { status };
-    if (status === "in_progress") patch.check_in_at = new Date().toISOString();
-    if (status === "completed") patch.check_out_at = new Date().toISOString();
+  const openAction = (v: Visit, nextStatus: "in_progress" | "completed") => {
+    setActionTarget({ visit: v, nextStatus });
+    setActionNotes(v.notes ?? "");
+  };
+
+  const confirmAction = async () => {
+    if (!actionTarget) return;
+    const { visit: v, nextStatus } = actionTarget;
+    const patch: any = { status: nextStatus, staff_id: v.staff_id ?? user?.id };
+    const now = new Date().toISOString();
+    if (nextStatus === "in_progress") patch.check_in_at = v.check_in_at ?? now;
+    if (nextStatus === "completed") {
+      patch.check_out_at = now;
+      if (!v.check_in_at) patch.check_in_at = now;
+    }
+    if (actionNotes.trim()) patch.notes = actionNotes.trim();
     const { error } = await supabase.from("visits").update(patch).eq("id", v.id);
+    if (error) return toast.error(error.message);
+    toast.success(nextStatus === "completed" ? "Visit completed" : "Checked in");
+    setActionTarget(null);
+    setActionNotes("");
+    load();
+  };
+
+  const markMissed = async (v: Visit) => {
+    const { error } = await supabase.from("visits").update({ status: "missed" }).eq("id", v.id);
     if (error) return toast.error(error.message);
     load();
   };
@@ -82,13 +105,35 @@ function Visits() {
         </div>
       )}
 
-      <VisitList title={`Upcoming & In Progress (${upcoming.length})`} visits={upcoming} loading={loading} canEdit={canEdit} isMine={isMine} updateStatus={updateStatus} />
-      <VisitList title={`History (${past.length})`} visits={past} loading={loading} canEdit={canEdit} isMine={isMine} updateStatus={updateStatus} />
+      <VisitList title={`Upcoming & In Progress (${upcoming.length})`} visits={upcoming} loading={loading} canEdit={canEdit} isMine={isMine} openAction={openAction} markMissed={markMissed} />
+      <VisitList title={`History (${past.length})`} visits={past} loading={loading} canEdit={canEdit} isMine={isMine} openAction={openAction} markMissed={markMissed} />
+
+      {actionTarget && (
+        <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setActionTarget(null)}>
+          <div className="bg-card border border-border w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-bold">{actionTarget.nextStatus === "completed" ? "Complete visit" : "Check in"}</h3>
+            <div className="text-xs font-mono uppercase text-muted-foreground">
+              {actionTarget.visit.scheduled_date} {actionTarget.visit.scheduled_time ?? ""} · {actionTarget.visit.visit_type}
+            </div>
+            <div>
+              <FieldLabel>Visit notes</FieldLabel>
+              <textarea value={actionNotes} onChange={(e) => setActionNotes(e.target.value)} rows={4} className="w-full px-3 py-2 border border-border bg-background text-sm" placeholder="Care provided, observations, follow-up…" />
+            </div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">
+              {actionTarget.nextStatus === "completed" ? "Check-out time will be recorded as now." : "Check-in time will be recorded as now."}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setActionTarget(null)} className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground hover:text-foreground">Cancel</button>
+              <button onClick={confirmAction} className="bg-primary text-primary-foreground px-4 py-2 text-sm font-bold">{actionTarget.nextStatus === "completed" ? "Complete" : "Check in"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function VisitList({ title, visits, loading, canEdit, isMine, updateStatus }: { title: string; visits: Visit[]; loading: boolean; canEdit: boolean; isMine: (v: Visit) => boolean; updateStatus: (v: Visit, s: string) => void }) {
+function VisitList({ title, visits, loading, canEdit, isMine, openAction, markMissed }: { title: string; visits: Visit[]; loading: boolean; canEdit: boolean; isMine: (v: Visit) => boolean; openAction: (v: Visit, s: "in_progress" | "completed") => void; markMissed: (v: Visit) => void }) {
   return (
     <div className="border border-border bg-card">
       <div className="px-6 py-4 border-b border-border"><h3 className="text-xs font-bold uppercase tracking-widest">{title}</h3></div>
@@ -101,18 +146,19 @@ function VisitList({ title, visits, loading, canEdit, isMine, updateStatus }: { 
           </thead>
           <tbody className="divide-y divide-border">
             {visits.map((v) => (
-              <tr key={v.id}>
+              <tr key={v.id} className="align-top">
                 <td className="px-4 py-3 font-mono text-xs">{v.scheduled_date}</td>
                 <td className="px-4 py-3 font-mono text-xs">{v.scheduled_time ?? "—"}</td>
                 <td className="px-4 py-3 capitalize">{v.visit_type}</td>
                 <td className="px-4 py-3"><span className={"px-2 py-0.5 rounded-full text-[10px] font-bold uppercase " + (STATUS_COLORS[v.status] ?? "bg-muted text-muted-foreground")}>{v.status.replace("_", " ")}</span></td>
                 <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">
                   {v.check_in_at ? new Date(v.check_in_at).toLocaleTimeString() : "—"} / {v.check_out_at ? new Date(v.check_out_at).toLocaleTimeString() : "—"}
+                  {v.notes && <div className="mt-1 text-xs font-sans text-foreground/80 italic max-w-xs whitespace-normal">"{v.notes}"</div>}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  {(canEdit || isMine(v)) && v.status === "scheduled" && <button onClick={() => updateStatus(v, "in_progress")} className="text-[10px] font-mono uppercase text-primary hover:underline">Check in</button>}
-                  {(canEdit || isMine(v)) && v.status === "in_progress" && <button onClick={() => updateStatus(v, "completed")} className="text-[10px] font-mono uppercase text-primary hover:underline">Complete</button>}
-                  {canEdit && v.status === "scheduled" && <button onClick={() => updateStatus(v, "missed")} className="text-[10px] font-mono uppercase text-muted-foreground hover:text-alert-red ml-3">Missed</button>}
+                <td className="px-4 py-3 text-right whitespace-nowrap">
+                  {(canEdit || isMine(v)) && v.status === "scheduled" && <button onClick={() => openAction(v, "in_progress")} className="text-[10px] font-mono uppercase text-primary hover:underline">Check in</button>}
+                  {(canEdit || isMine(v)) && v.status === "in_progress" && <button onClick={() => openAction(v, "completed")} className="text-[10px] font-mono uppercase text-primary hover:underline">Complete</button>}
+                  {canEdit && v.status === "scheduled" && <button onClick={() => markMissed(v)} className="text-[10px] font-mono uppercase text-muted-foreground hover:text-alert-red ml-3">Missed</button>}
                 </td>
               </tr>
             ))}
