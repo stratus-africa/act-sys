@@ -12,7 +12,7 @@ const TABS = [
   { to: "/patients/$patientId/assessment", label: "Participant Assessment" },
   { to: "/patients/$patientId/care-plan", label: "Care Plan" },
   { to: "/patients/$patientId/visits", label: "Visits" },
-  { to: "/patients/$patientId/skin", label: "Skin" },
+  { to: "/patients/$patientId/skin", label: "Skin Tracking" },
   { to: "/patients/$patientId/documents", label: "Documents" },
 ];
 
@@ -22,11 +22,13 @@ function PatientShell() {
   const [p, setP] = useState<any>(null);
   const [fall, setFall] = useState<{ total_score: number; risk_level: string } | null>(null);
   const [consent, setConsent] = useState<{ status: string } | null>(null);
+  const [skin, setSkin] = useState<{ status: string; assessment_date: string } | null>(null);
 
   useEffect(() => {
     supabase.from("patients").select("*").eq("id", patientId).single().then(({ data }) => setP(data));
     supabase.from("fall_risk_assessments").select("total_score, risk_level, assessment_date").eq("patient_id", patientId).order("assessment_date", { ascending: false }).limit(1).maybeSingle().then(({ data }) => setFall(data));
     supabase.from("patient_consents").select("status").eq("patient_id", patientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(({ data }) => setConsent(data));
+    supabase.from("skin_assessments").select("status, assessment_date").eq("patient_id", patientId).order("assessment_date", { ascending: false }).limit(1).maybeSingle().then(({ data }) => setSkin(data));
   }, [patientId]);
 
   const atRisk = fall ? fall.risk_level === "at_risk" || fall.total_score >= 4 : false;
@@ -51,6 +53,12 @@ function PatientShell() {
               {p?.dnr_status && <PrecautionBadge variant="red" label="DNR" />}
               {atRisk && <PrecautionBadge variant="red" label={`FALL RISK (${fall?.total_score})`} />}
               {consent?.status !== "complete" && <PrecautionBadge variant="amber" label="CONSENT PENDING" />}
+              {skin && (
+                <PrecautionBadge
+                  variant={skin.status === "abnormal" ? "red" : "neutral"}
+                  label={`SKIN ${skin.status.toUpperCase()} · ${skin.assessment_date}`}
+                />
+              )}
             </div>
           </div>
         </div>
