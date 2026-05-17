@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { SignaturePad, type SignatureValue } from "@/components/app/SignaturePad";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { FileText, Download, Trash2, Upload } from "lucide-react";
+import { FileText, Download, Trash2, Upload, PenLine, Search, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/documents")({ component: Documents });
 
@@ -15,11 +15,39 @@ type Doc = {
   signed_at: string | null; created_at: string;
 };
 
+const CATEGORIES = [
+  { value: "clinical", label: "Clinical" },
+  { value: "consent", label: "Consent / HIPAA" },
+  { value: "insurance", label: "Insurance" },
+  { value: "referral", label: "Physician referral" },
+  { value: "lab", label: "Lab / imaging" },
+  { value: "physician_orders", label: "Physician orders" },
+  { value: "advance_directive", label: "Advance directive" },
+  { value: "other", label: "Other" },
+];
+
+// Roles allowed to sign each category. "*" = any authenticated user with upload access.
+const CATEGORY_SIGN_ROLES: Record<string, string[]> = {
+  clinical: ["admin", "rn"],
+  consent: ["admin", "rn"],
+  physician_orders: ["admin", "rn"],
+  advance_directive: ["admin", "rn"],
+  insurance: ["admin", "rn", "caregiver"],
+  referral: ["admin", "rn"],
+  lab: ["admin", "rn"],
+  other: ["admin", "rn", "caregiver"],
+};
+
 function Documents() {
   const { patientId } = Route.useParams();
   const { primaryRole, user } = useCurrentUser();
   const canUpload = primaryRole === "admin" || primaryRole === "rn" || primaryRole === "caregiver";
   const canDelete = primaryRole === "admin" || primaryRole === "rn";
+  const role = primaryRole ?? "";
+  const canSignCategory = (cat: string | null) => {
+    const allowed = CATEGORY_SIGN_ROLES[cat ?? "other"] ?? ["admin", "rn"];
+    return allowed.includes(role);
+  };
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -28,6 +56,12 @@ function Documents() {
   const [category, setCategory] = useState("clinical");
   const [sig, setSig] = useState<SignatureValue>({ dataUrl: null, typed: "" });
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterSigned, setFilterSigned] = useState<"all" | "signed" | "unsigned">("all");
+  const [signTarget, setSignTarget] = useState<Doc | null>(null);
+  const [signSig, setSignSig] = useState<SignatureValue>({ dataUrl: null, typed: "" });
+  const [signing, setSigning] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,12 +140,7 @@ function Documents() {
                 <div>
                   <FieldLabel>Category</FieldLabel>
                   <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm">
-                    <option value="clinical">Clinical</option>
-                    <option value="consent">Consent / HIPAA</option>
-                    <option value="insurance">Insurance</option>
-                    <option value="referral">Physician referral</option>
-                    <option value="lab">Lab / imaging</option>
-                    <option value="other">Other</option>
+                    {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -125,23 +154,45 @@ function Documents() {
       )}
 
       <div className="border border-border bg-card">
-        <div className="px-6 py-4 border-b border-border"><h3 className="text-xs font-bold uppercase tracking-widest">Files ({docs.length})</h3></div>
+        <div className="px-6 py-4 border-b border-border flex flex-wrap items-center gap-3 justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-widest">Files ({filteredDocs.length} / {docs.length})</h3>
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative">
+              <Search className="size-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search filename…" className="pl-7 pr-3 py-1.5 border border-border bg-background text-xs w-56" />
+            </div>
+            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-2 py-1.5 border border-border bg-background text-xs">
+              <option value="all">All categories</option>
+              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+            <select value={filterSigned} onChange={(e) => setFilterSigned(e.target.value as any)} className="px-2 py-1.5 border border-border bg-background text-xs">
+              <option value="all">Any status</option>
+              <option value="signed">Signed only</option>
+              <option value="unsigned">Unsigned only</option>
+            </select>
+          </div>
+        </div>
         {loading ? <div className="p-6 text-xs text-muted-foreground text-center">Loading…</div>
-          : docs.length === 0 ? <div className="p-6 text-xs text-muted-foreground text-center">No documents uploaded yet.</div>
+          : filteredDocs.length === 0 ? <div className="p-6 text-xs text-muted-foreground text-center">No documents match your filters.</div>
           : (
           <ul className="divide-y divide-border">
-            {docs.map((d) => (
+            {filteredDocs.map((d) => (
               <li key={d.id} className="px-6 py-4 flex items-center gap-4">
                 <FileText className="size-5 text-muted-foreground shrink-0" strokeWidth={1.5} />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm truncate">{d.file_name}</div>
                   <div className="flex gap-3 text-[10px] font-mono uppercase text-muted-foreground mt-1 flex-wrap">
-                    <span>{d.category}</span>
+                    <span>{CATEGORIES.find((c) => c.value === d.category)?.label ?? d.category}</span>
                     <span>{formatSize(d.size_bytes)}</span>
                     <span>{new Date(d.created_at).toLocaleDateString()}</span>
-                    {d.signed_at && <span className="text-primary">✓ Signed {new Date(d.signed_at).toLocaleDateString()}</span>}
+                    {d.signed_at
+                      ? <span className="text-primary flex items-center gap-1"><CheckCircle2 className="size-3" />Signed {new Date(d.signed_at).toLocaleDateString()}</span>
+                      : <span className="text-amber-600">Unsigned</span>}
                   </div>
                 </div>
+                {!d.signed_at && canSignCategory(d.category) && (
+                  <button onClick={() => { setSignTarget(d); setSignSig({ dataUrl: null, typed: "" }); }} className="p-2 text-muted-foreground hover:text-primary" title="Sign"><PenLine className="size-4" /></button>
+                )}
                 <button onClick={() => download(d)} className="p-2 text-muted-foreground hover:text-primary" title="Download"><Download className="size-4" /></button>
                 {canDelete && <button onClick={() => remove(d)} className="p-2 text-muted-foreground hover:text-alert-red" title="Delete"><Trash2 className="size-4" /></button>}
               </li>
@@ -149,6 +200,23 @@ function Documents() {
           </ul>
         )}
       </div>
+
+      {signTarget && (
+        <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setSignTarget(null)}>
+          <div className="bg-card border border-border w-full max-w-lg p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <div className="text-[10px] font-mono uppercase text-muted-foreground">Sign document</div>
+              <h3 className="text-sm font-bold">{signTarget.file_name}</h3>
+              <div className="text-[10px] font-mono uppercase text-muted-foreground mt-1">Signing as {role}</div>
+            </div>
+            <SignaturePad value={signSig} onChange={setSignSig} label="Your signature" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setSignTarget(null)} className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground hover:text-foreground">Cancel</button>
+              <button onClick={signDocument} disabled={signing} className="bg-primary text-primary-foreground px-4 py-2 text-sm font-bold disabled:opacity-50">{signing ? "Signing…" : "Sign document"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
