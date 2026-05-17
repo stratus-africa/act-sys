@@ -794,6 +794,60 @@ export type Database = {
         }
         Relationships: []
       }
+      rn_assessments: {
+        Row: {
+          assessment_date: string
+          created_at: string
+          general_notes: string | null
+          id: string
+          nurse_id: string | null
+          nurse_name: string | null
+          nurse_signature_typed: string | null
+          nurse_signature_url: string | null
+          patient_id: string
+          patient_name: string | null
+          patient_signature_typed: string | null
+          patient_signature_url: string | null
+          signed_at: string | null
+          tasks: Json
+          updated_at: string
+        }
+        Insert: {
+          assessment_date?: string
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          nurse_id?: string | null
+          nurse_name?: string | null
+          nurse_signature_typed?: string | null
+          nurse_signature_url?: string | null
+          patient_id: string
+          patient_name?: string | null
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
+          signed_at?: string | null
+          tasks?: Json
+          updated_at?: string
+        }
+        Update: {
+          assessment_date?: string
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          nurse_id?: string | null
+          nurse_name?: string | null
+          nurse_signature_typed?: string | null
+          nurse_signature_url?: string | null
+          patient_id?: string
+          patient_name?: string | null
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
+          signed_at?: string | null
+          tasks?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       skin_assessment_notes: {
         Row: {
           created_at: string
@@ -1037,6 +1091,30 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_view_preferences: {
+        Row: {
+          entity_id: string
+          prefs: Json
+          scope: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          entity_id: string
+          prefs?: Json
+          scope: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          entity_id?: string
+          prefs?: Json
+          scope?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
