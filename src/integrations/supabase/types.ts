@@ -664,6 +664,7 @@ export type Database = {
           full_name: string | null
           id: string
           license_no: string | null
+          notification_prefs: Json
           phone: string | null
           updated_at: string
         }
@@ -674,6 +675,7 @@ export type Database = {
           full_name?: string | null
           id: string
           license_no?: string | null
+          notification_prefs?: Json
           phone?: string | null
           updated_at?: string
         }
@@ -684,6 +686,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           license_no?: string | null
+          notification_prefs?: Json
           phone?: string | null
           updated_at?: string
         }
