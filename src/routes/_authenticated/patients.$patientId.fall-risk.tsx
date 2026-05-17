@@ -88,7 +88,7 @@ function FallRiskPage() {
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-mono uppercase text-muted-foreground">Total score</span>
             <span className="text-2xl font-mono font-bold tabular-nums">{total}<span className="text-muted-foreground text-sm">/10</span></span>
-            {risk === "at_risk" ? <PrecautionBadge variant="red" label="AT RISK" /> : <PrecautionBadge variant="neutral" label="LOW" />}
+            {risk === "at_risk" ? <PrecautionBadge variant="red" label="AT RISK" /> : <PrecautionBadge variant="neutral" label="NOT AT RISK" />}
           </div>
         </div>
 
@@ -150,7 +150,7 @@ function FallRiskPage() {
                   <td className="px-4 py-2 font-mono text-xs">{h.assessment_date}</td>
                   <td className="px-4 py-2 capitalize">{h.assessment_type.replace("_", " ")}</td>
                   <td className="px-4 py-2 font-mono">{h.total_score}/10</td>
-                  <td className="px-4 py-2">{h.risk_level === "at_risk" ? <span className="text-alert-red font-bold text-xs">AT RISK</span> : <span className="text-muted-foreground text-xs">Low</span>}</td>
+                  <td className="px-4 py-2">{h.risk_level === "at_risk" ? <span className="text-alert-red font-bold text-xs">AT RISK</span> : <span className="text-muted-foreground text-xs">Not at risk</span>}</td>
                 </tr>
               ))}
             </tbody>

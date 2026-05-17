@@ -32,6 +32,8 @@ function Visits() {
   const [type, setType] = useState("routine");
   const [actionTarget, setActionTarget] = useState<{ visit: Visit; nextStatus: "in_progress" | "completed" } | null>(null);
   const [actionNotes, setActionNotes] = useState("");
+  const [editTarget, setEditTarget] = useState<Visit | null>(null);
+  const [editNotes, setEditNotes] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,6 +83,20 @@ function Visits() {
     load();
   };
 
+  const openEdit = (v: Visit) => { setEditTarget(v); setEditNotes(v.notes ?? ""); };
+  const saveEdit = async () => {
+    if (!editTarget) return;
+    // Only update notes — preserve check_in_at / check_out_at and status
+    const { error } = await supabase.from("visits")
+      .update({ notes: editNotes.trim() || null })
+      .eq("id", editTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success("Notes updated");
+    setEditTarget(null);
+    setEditNotes("");
+    load();
+  };
+
   const isMine = (v: Visit) => v.staff_id === user?.id;
 
   const upcoming = visits.filter((v) => v.status === "scheduled" || v.status === "in_progress");
@@ -105,8 +121,8 @@ function Visits() {
         </div>
       )}
 
-      <VisitList title={`Upcoming & In Progress (${upcoming.length})`} visits={upcoming} loading={loading} canEdit={canEdit} isMine={isMine} openAction={openAction} markMissed={markMissed} />
-      <VisitList title={`History (${past.length})`} visits={past} loading={loading} canEdit={canEdit} isMine={isMine} openAction={openAction} markMissed={markMissed} />
+      <VisitList title={`Upcoming & In Progress (${upcoming.length})`} visits={upcoming} loading={loading} canEdit={canEdit} isMine={isMine} openAction={openAction} markMissed={markMissed} openEdit={openEdit} />
+      <VisitList title={`History (${past.length})`} visits={past} loading={loading} canEdit={canEdit} isMine={isMine} openAction={openAction} markMissed={markMissed} openEdit={openEdit} />
 
       {actionTarget && (
         <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setActionTarget(null)}>
@@ -129,11 +145,35 @@ function Visits() {
           </div>
         </div>
       )}
+
+      {editTarget && (
+        <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setEditTarget(null)}>
+          <div className="bg-card border border-border w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <div className="text-[10px] font-mono uppercase text-muted-foreground">Edit notes — {editTarget.status}</div>
+              <h3 className="text-sm font-bold">{editTarget.scheduled_date} {editTarget.scheduled_time ?? ""} · {editTarget.visit_type}</h3>
+            </div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground grid grid-cols-2 gap-2 bg-muted/40 p-2">
+              <div>Check-in: <span className="text-foreground">{editTarget.check_in_at ? new Date(editTarget.check_in_at).toLocaleString() : "—"}</span></div>
+              <div>Check-out: <span className="text-foreground">{editTarget.check_out_at ? new Date(editTarget.check_out_at).toLocaleString() : "—"}</span></div>
+            </div>
+            <div>
+              <FieldLabel>Visit notes</FieldLabel>
+              <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={5} className="w-full px-3 py-2 border border-border bg-background text-sm" />
+              <p className="text-[10px] font-mono uppercase text-muted-foreground mt-1">Timestamps are preserved.</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditTarget(null)} className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground hover:text-foreground">Cancel</button>
+              <button onClick={saveEdit} className="bg-primary text-primary-foreground px-4 py-2 text-sm font-bold">Save notes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function VisitList({ title, visits, loading, canEdit, isMine, openAction, markMissed }: { title: string; visits: Visit[]; loading: boolean; canEdit: boolean; isMine: (v: Visit) => boolean; openAction: (v: Visit, s: "in_progress" | "completed") => void; markMissed: (v: Visit) => void }) {
+function VisitList({ title, visits, loading, canEdit, isMine, openAction, markMissed, openEdit }: { title: string; visits: Visit[]; loading: boolean; canEdit: boolean; isMine: (v: Visit) => boolean; openAction: (v: Visit, s: "in_progress" | "completed") => void; markMissed: (v: Visit) => void; openEdit: (v: Visit) => void }) {
   return (
     <div className="border border-border bg-card">
       <div className="px-6 py-4 border-b border-border"><h3 className="text-xs font-bold uppercase tracking-widest">{title}</h3></div>
@@ -159,6 +199,7 @@ function VisitList({ title, visits, loading, canEdit, isMine, openAction, markMi
                   {(canEdit || isMine(v)) && v.status === "scheduled" && <button onClick={() => openAction(v, "in_progress")} className="text-[10px] font-mono uppercase text-primary hover:underline">Check in</button>}
                   {(canEdit || isMine(v)) && v.status === "in_progress" && <button onClick={() => openAction(v, "completed")} className="text-[10px] font-mono uppercase text-primary hover:underline">Complete</button>}
                   {canEdit && v.status === "scheduled" && <button onClick={() => markMissed(v)} className="text-[10px] font-mono uppercase text-muted-foreground hover:text-alert-red ml-3">Missed</button>}
+                  {(canEdit || isMine(v)) && <button onClick={() => openEdit(v)} className="text-[10px] font-mono uppercase text-muted-foreground hover:text-foreground ml-3">Edit notes</button>}
                 </td>
               </tr>
             ))}
