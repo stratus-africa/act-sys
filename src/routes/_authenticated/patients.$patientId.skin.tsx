@@ -23,7 +23,7 @@ const PRESSURE_AREAS: Array<{ key: string; label: string }> = [
 ];
 
 type Side = "front" | "back";
-type Marking = { x: number; y: number; side: Side; label: string; area?: string };
+type Marking = { x: number; y: number; side: Side; label: string; area?: string; idx: number };
 
 const areaLabel = (k?: string) => PRESSURE_AREAS.find((a) => a.key === k)?.label;
 
@@ -55,17 +55,17 @@ function BodyCanvas({
         className={"relative border-2 border-border bg-card mx-auto " + (large ? "max-w-md " : "") + (editable ? "cursor-crosshair" : "cursor-not-allowed opacity-90")}
       >
         <img src={image} alt={`Body diagram ${side}`} className="w-full h-auto pointer-events-none select-none" />
-        {sideMarks.map(({ m, i }, idx) => (
+        {sideMarks.map(({ m, i }) => (
           <button
             key={i}
             type="button"
             onClick={(e) => { e.stopPropagation(); if (editable) onRemove(i); }}
             className="absolute -ml-3 -mt-3 w-6 h-6 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md text-[10px] font-bold flex items-center justify-center hover:scale-125 transition"
             style={{ left: `${m.x}%`, top: `${m.y}%` }}
-            title={[areaLabel(m.area), m.label].filter(Boolean).join(" — ") || `Marker ${idx + 1}`}
-            aria-label={`Remove ${m.label || `marker ${idx + 1}`}`}
+            title={[areaLabel(m.area), m.label].filter(Boolean).join(" — ") || `Marker #${m.idx}`}
+            aria-label={`Remove ${m.label || `marker #${m.idx}`}`}
           >
-            {idx + 1}
+            {m.idx}
           </button>
         ))}
       </div>
@@ -95,14 +95,48 @@ function SkinPage() {
   const [notes, setNotes] = useState<any[]>([]);
   const [newRemark, setNewRemark] = useState("");
   const viewKey = `skin_view_${patientId}`;
-  const [view, setView] = useState<Side>(() => {
-    if (typeof window === "undefined") return "front";
-    return (localStorage.getItem(viewKey) as Side) || "front";
-  });
-  useEffect(() => { localStorage.setItem(viewKey, view); }, [view, viewKey]);
+  const [view, setView] = useState<Side>("front");
+  const [viewLoaded, setViewLoaded] = useState(false);
   const [pending, setPending] = useState<{ x: number; y: number; side: Side } | null>(null);
   const [pendingArea, setPendingArea] = useState<string>("");
   const [pendingLabel, setPendingLabel] = useState<string>("");
+
+  // Load Front/Back preference from Supabase (per user × per patient)
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setViewLoaded(true); return; }
+      const { data } = await supabase
+        .from("user_view_preferences")
+        .select("prefs")
+        .eq("user_id", user.id)
+        .eq("scope", "skin")
+        .eq("entity_id", patientId)
+        .maybeSingle();
+      const saved = (data?.prefs as any)?.view as Side | undefined;
+      // fall back to legacy localStorage value so existing users don't lose state
+      const legacy = typeof window !== "undefined" ? (localStorage.getItem(viewKey) as Side | null) : null;
+      if (active) setView(saved ?? legacy ?? "front");
+      if (active) setViewLoaded(true);
+    })();
+    return () => { active = false; };
+  }, [patientId, viewKey]);
+
+  // Persist Front/Back preference to Supabase whenever it changes
+  useEffect(() => {
+    if (!viewLoaded) return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from("user_view_preferences").upsert({
+        user_id: user.id,
+        scope: "skin",
+        entity_id: patientId,
+        prefs: { view },
+      });
+    })();
+  }, [view, viewLoaded, patientId]);
 
   const loadHistory = () => {
     supabase.from("skin_assessments").select("*").eq("patient_id", patientId).order("assessment_date", { ascending: false }).then(({ data }) => setHistory(data ?? []));
@@ -125,13 +159,25 @@ function SkinPage() {
   };
   const confirmMarker = () => {
     if (!pending) return;
-    setMarkings((m) => [...m, { ...pending, label: pendingLabel.trim(), area: pendingArea || undefined }]);
+    // Assign a stable idx that is strictly increasing across the whole assessment
+    const nextIdx = markings.reduce((max, mk) => Math.max(max, mk.idx ?? 0), 0) + 1;
+    setMarkings((m) => [...m, { ...pending, label: pendingLabel.trim(), area: pendingArea || undefined, idx: nextIdx }]);
     if (pendingArea) {
       setAreas((s) => ({ ...s, [pendingArea]: { affected: true, note: pendingLabel.trim() || s[pendingArea].note } }));
     }
     setPending(null);
   };
-  const removeMark = (idx: number) => setMarkings((m) => m.filter((_, i) => i !== idx));
+  // Remove by array position. The visual `idx` of remaining markers is preserved (no renumbering).
+  const removeMark = (pos: number) => setMarkings((m) => {
+    const removed = m[pos];
+    const next = m.filter((_, i) => i !== pos);
+    // If the removed marker was linked to a pressure-sore area and no other markers still link it,
+    // uncheck the side panel for that area.
+    if (removed?.area && !next.some((x) => x.area === removed.area)) {
+      setAreas((s) => ({ ...s, [removed.area!]: { affected: false, note: s[removed.area!]?.note ?? "" } }));
+    }
+    return next;
+  });
 
   const submit = async () => {
     if (!clinicianSigned) { toast.error("Clinician signature required"); return; }
@@ -182,20 +228,22 @@ function SkinPage() {
     if (!printTarget) { toast.error("No assessment to export"); return; }
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) { toast.error("Pop-up blocked"); return; }
-    const marks: Marking[] = Array.isArray(printTarget.markings) ? printTarget.markings : [];
+    const rawMarks: any[] = Array.isArray(printTarget.markings) ? printTarget.markings : [];
+    // Backfill idx for legacy records that didn't have stable indexes
+    const marks: Marking[] = rawMarks.map((m, i) => ({ ...m, idx: typeof m.idx === "number" ? m.idx : i + 1 }));
     const areasMap = (printTarget.pressure_areas ?? {}) as Record<string, { affected: boolean; note: string }>;
     const renderSide = (s: Side, img: string) => {
-      const sideMarks = marks.map((m, i) => ({ m, i: marks.filter((mm, j) => mm.side === s && j <= i).length })).filter(({ m }) => m.side === s);
+      const sideMarks = marks.filter((m) => m.side === s);
       return `
         <div style="text-align:center">
           <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#666">${s}</div>
           <div style="position:relative;display:inline-block;border:1px solid #000">
             <img src="${img}" style="width:280px;height:auto;display:block"/>
-            ${sideMarks.map(({ m, i }) => `<span style="position:absolute;left:${m.x}%;top:${m.y}%;margin-left:-10px;margin-top:-10px;width:20px;height:20px;border-radius:50%;background:#c00;color:#fff;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;border:1px solid #fff">${i}</span>`).join("")}
+            ${sideMarks.map((m) => `<span style="position:absolute;left:${m.x}%;top:${m.y}%;margin-left:-10px;margin-top:-10px;width:20px;height:20px;border-radius:50%;background:#c00;color:#fff;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;border:1px solid #fff">${m.idx}</span>`).join("")}
           </div>
         </div>`;
     };
-    const notationsList = marks.map((m, i) => `<li><b>#${i + 1}</b> [${m.side}] ${areaLabel(m.area) ? `<i>${areaLabel(m.area)}</i> — ` : ""}${m.label || "(no label)"}</li>`).join("");
+    const notationsList = marks.map((m) => `<li><b>#${m.idx}</b> [${m.side}] ${areaLabel(m.area) ? `<i>${areaLabel(m.area)}</i> — ` : ""}${m.label || "(no label)"}</li>`).join("");
     const areasList = Object.entries(areasMap).filter(([, v]) => v?.affected).map(([k, v]) => `<li><b>${areaLabel(k) ?? k}</b>: ${v.note || "—"}</li>`).join("") || "<li>None</li>";
     const historyList = history.map((h) => `<li>${h.assessment_date} — <b>${h.status}</b> (${Array.isArray(h.markings) ? h.markings.length : 0} notations)</li>`).join("");
     const sigBlock = printTarget.clinician_signature_typed
@@ -408,21 +456,50 @@ function SkinPage() {
             <div className="border border-border p-4 space-y-4">
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Notations · {active.assessment_date}</div>
-                {(active.markings as Marking[] | null)?.length ? (
+                {(active.markings as any[] | null)?.length ? (
                   <ul className="mt-2 space-y-1">
-                    {(active.markings as Marking[]).map((m, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs">
-                        <span className="inline-flex w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold items-center justify-center">{i + 1}</span>
-                        <span className="font-mono uppercase text-[10px] text-muted-foreground">{m.side}</span>
-                        <span>
-                          {areaLabel(m.area) && <span className="font-mono uppercase text-[10px] text-primary mr-1">{areaLabel(m.area)}</span>}
-                          {m.label || <em className="text-muted-foreground">no label</em>}
-                        </span>
-                      </li>
-                    ))}
+                    {(active.markings as any[]).map((m, i) => {
+                      const idx = typeof m.idx === "number" ? m.idx : i + 1;
+                      return (
+                        <li key={i} className="flex items-center gap-2 text-xs">
+                          <span className="inline-flex w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold items-center justify-center">{idx}</span>
+                          <span className="font-mono uppercase text-[10px] text-muted-foreground">{m.side}</span>
+                          <span>
+                            {areaLabel(m.area) && <span className="font-mono uppercase text-[10px] text-primary mr-1">{areaLabel(m.area)}</span>}
+                            {m.label || <em className="text-muted-foreground">no label</em>}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <div className="text-xs text-muted-foreground mt-2">No body notations.</div>
+                )}
+
+                {(() => {
+                  const am = (active.pressure_areas ?? {}) as Record<string, { affected: boolean; note: string }>;
+                  const checked = Object.entries(am).filter(([, v]) => v?.affected);
+                  if (checked.length === 0) return null;
+                  return (
+                    <div className="mt-4">
+                      <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Pressure-sore areas affected</div>
+                      <ul className="space-y-1">
+                        {checked.map(([k, v]) => (
+                          <li key={k} className="text-xs flex gap-2">
+                            <span className="inline-block w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">✓</span>
+                            <span><b>{areaLabel(k) ?? k}</b>{v.note ? ` — ${v.note}` : ""}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()}
+
+                {active.general_notes && (
+                  <div className="mt-4">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">General notes</div>
+                    <div className="text-xs whitespace-pre-wrap">{active.general_notes}</div>
+                  </div>
                 )}
               </div>
 
