@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SignaturePad, type SignatureValue } from "@/components/app/SignaturePad";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
