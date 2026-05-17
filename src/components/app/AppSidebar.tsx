@@ -1,16 +1,20 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Stethoscope, ClipboardList, CalendarDays, FileText, Settings, LogOut, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, CalendarDays, FileText, Settings, LogOut, UserCog, ChevronDown, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/lib/use-current-user";
 
 const ALL_NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "rn", "caregiver", "patient"] },
   { to: "/patients", label: "Patient Registry", icon: Users, roles: ["admin", "rn", "caregiver"] },
-  { to: "/staff", label: "Staff", icon: UserCog, roles: ["admin"] },
   { to: "/visits", label: "Visits & Scheduling", icon: CalendarDays, roles: ["admin", "rn", "caregiver"] },
   { to: "/timesheets", label: "Timesheets", icon: ClipboardList, roles: ["admin", "rn", "caregiver"] },
   { to: "/reports", label: "Reports", icon: FileText, roles: ["admin", "rn"] },
-  { to: "/settings", label: "Settings", icon: Settings, roles: ["admin", "rn", "caregiver", "patient"] },
+];
+
+const SETTINGS_CHILDREN: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
+  { to: "/settings", label: "General", icon: SlidersHorizontal, roles: ["admin", "rn", "caregiver", "patient"] },
+  { to: "/staff", label: "Staff", icon: UserCog, roles: ["admin"] },
 ];
 
 const ROLE_LABEL: Record<AppRole, string> = {
@@ -26,6 +30,10 @@ export function AppSidebar() {
   const { user, primaryRole } = useCurrentUser();
 
   const visibleNav = ALL_NAV.filter((item) => !primaryRole || item.roles.includes(primaryRole));
+  const visibleSettings = SETTINGS_CHILDREN.filter((item) => !primaryRole || item.roles.includes(primaryRole));
+  const settingsActive = visibleSettings.some((s) => pathname === s.to || pathname.startsWith(s.to + "/"));
+  const [settingsOpen, setSettingsOpen] = useState(settingsActive);
+  useEffect(() => { if (settingsActive) setSettingsOpen(true); }, [settingsActive]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -64,6 +72,46 @@ export function AppSidebar() {
             </Link>
           );
         })}
+
+        {visibleSettings.length > 0 && (
+          <div className="pt-2">
+            <button
+              onClick={() => setSettingsOpen((v) => !v)}
+              className={
+                "w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors border-l-2 " +
+                (settingsActive
+                  ? "bg-primary/5 text-primary font-medium border-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground border-transparent")
+              }
+            >
+              <Settings className="size-4 shrink-0" strokeWidth={1.5} />
+              <span className="truncate flex-1 text-left">Settings</span>
+              {settingsOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+            </button>
+            {settingsOpen && (
+              <div className="ml-3 mt-0.5 pl-3 border-l border-border space-y-0.5">
+                {visibleSettings.map((item) => {
+                  const active = pathname === item.to || pathname.startsWith(item.to + "/");
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={
+                        "flex items-center gap-2 px-3 py-1.5 text-xs rounded-sm transition-colors " +
+                        (active
+                          ? "bg-primary/5 text-primary font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                      }
+                    >
+                      <item.icon className="size-3.5 shrink-0" strokeWidth={1.5} />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="p-4 border-t border-border bg-muted/30">
