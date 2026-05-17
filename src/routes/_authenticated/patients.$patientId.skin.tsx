@@ -136,7 +136,7 @@ function SkinPage() {
         {history[0] && (
           <PrecautionBadge
             variant={history[0].status === "abnormal" ? "red" : "neutral"}
-            label={`LATEST: ${history[0].status.toUpperCase()} · ${history[0].assessment_date}`}
+            label={`SKIN ${history[0].status.toUpperCase()} · ${history[0].assessment_date}`}
           />
         )}
       </div>
