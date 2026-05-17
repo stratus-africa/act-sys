@@ -117,7 +117,7 @@ function RnAssessmentPage() {
   };
 
   const concernCount = (t: TaskMap) => Object.values(t).filter((v) => v?.observed === "no").length;
-  const completedCount = (t: TaskMap) => Object.values(t).filter((v) => v?.observed && v.observed !== "").length;
+  const completedCount = (t: TaskMap) => Object.values(t).filter((v) => !!v?.observed).length;
 
   const submit = async () => {
     if (!canCreate) return;
