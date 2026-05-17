@@ -97,6 +97,8 @@ export type Database = {
           multiple_diagnoses: boolean
           pain_affecting_function: boolean
           patient_id: string
+          patient_signature_typed: string | null
+          patient_signature_url: string | null
           polypharmacy: boolean
           prior_falls: boolean
           risk_level: string
@@ -119,6 +121,8 @@ export type Database = {
           multiple_diagnoses?: boolean
           pain_affecting_function?: boolean
           patient_id: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
           polypharmacy?: boolean
           prior_falls?: boolean
           risk_level?: string
@@ -141,6 +145,8 @@ export type Database = {
           multiple_diagnoses?: boolean
           pain_affecting_function?: boolean
           patient_id?: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
           polypharmacy?: boolean
           prior_falls?: boolean
           risk_level?: string
