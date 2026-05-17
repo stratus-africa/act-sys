@@ -37,7 +37,6 @@ function SkinPage() {
   const { hasRole, loading: roleLoading } = useCurrentUser();
   const isClinician = hasRole("admin") || hasRole("rn");
   const isCaregiver = hasRole("caregiver");
-  const isPatient = !isClinician && !isCaregiver;
   const canCreate = isClinician;
   const canAddNotes = isClinician || isCaregiver;
   const [status, setStatus] = useState<"normal" | "abnormal">("normal");
