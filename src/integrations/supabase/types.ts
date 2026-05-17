@@ -689,6 +689,92 @@ export type Database = {
         }
         Relationships: []
       }
+      skin_assessment_notes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          noted_at: string
+          patient_id: string
+          remarks: string
+          skin_assessment_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          noted_at?: string
+          patient_id: string
+          remarks: string
+          skin_assessment_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          noted_at?: string
+          patient_id?: string
+          remarks?: string
+          skin_assessment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skin_assessment_notes_skin_assessment_id_fkey"
+            columns: ["skin_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "skin_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skin_assessments: {
+        Row: {
+          assessment_date: string
+          clinician_id: string | null
+          clinician_signature_typed: string | null
+          clinician_signature_url: string | null
+          created_at: string
+          general_notes: string | null
+          id: string
+          markings: Json
+          patient_id: string
+          pressure_areas: Json
+          signed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_date?: string
+          clinician_id?: string | null
+          clinician_signature_typed?: string | null
+          clinician_signature_url?: string | null
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          markings?: Json
+          patient_id: string
+          pressure_areas?: Json
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_date?: string
+          clinician_id?: string | null
+          clinician_signature_typed?: string | null
+          clinician_signature_url?: string | null
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          markings?: Json
+          patient_id?: string
+          pressure_areas?: Json
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_invitations: {
         Row: {
           accepted_at: string | null
