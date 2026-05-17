@@ -13,6 +13,7 @@ const TABS = [
   { to: "/patients/$patientId/care-plan", label: "Care Plan" },
   { to: "/patients/$patientId/visits", label: "Visits" },
   { to: "/patients/$patientId/skin", label: "Skin Tracking" },
+  { to: "/patients/$patientId/allergies", label: "Allergies" },
   { to: "/patients/$patientId/caregiver-assessment", label: "Caregiver Assessment" },
   { to: "/patients/$patientId/documents", label: "Documents" },
 ];
@@ -24,12 +25,20 @@ function PatientShell() {
   const [fall, setFall] = useState<{ total_score: number; risk_level: string } | null>(null);
   const [consent, setConsent] = useState<{ status: string } | null>(null);
   const [skin, setSkin] = useState<{ status: string; assessment_date: string } | null>(null);
+  const [allergyCount, setAllergyCount] = useState<{ total: number; critical: number }>({ total: 0, critical: 0 });
 
   useEffect(() => {
     supabase.from("patients").select("*").eq("id", patientId).single().then(({ data }) => setP(data));
     supabase.from("fall_risk_assessments").select("total_score, risk_level, assessment_date").eq("patient_id", patientId).order("assessment_date", { ascending: false }).limit(1).maybeSingle().then(({ data }) => setFall(data));
     supabase.from("patient_consents").select("status").eq("patient_id", patientId).order("created_at", { ascending: false }).limit(1).maybeSingle().then(({ data }) => setConsent(data));
     supabase.from("skin_assessments").select("status, assessment_date").eq("patient_id", patientId).order("assessment_date", { ascending: false }).limit(1).maybeSingle().then(({ data }) => setSkin(data));
+    supabase.from("patient_allergies").select("severity").eq("patient_id", patientId).eq("active", true).then(({ data }) => {
+      const list = data ?? [];
+      setAllergyCount({
+        total: list.length,
+        critical: list.filter((a: any) => a.severity === "severe" || a.severity === "anaphylaxis").length,
+      });
+    });
   }, [patientId]);
 
   const atRisk = fall ? fall.risk_level === "at_risk" || fall.total_score >= 4 : false;
@@ -58,6 +67,12 @@ function PatientShell() {
                 <PrecautionBadge
                   variant={skin.status === "abnormal" ? "red" : "neutral"}
                   label={`SKIN ${skin.status.toUpperCase()} · ${skin.assessment_date}`}
+                />
+              )}
+              {allergyCount.total > 0 && (
+                <PrecautionBadge
+                  variant={allergyCount.critical > 0 ? "red" : "amber"}
+                  label={`ALLERGIES ${allergyCount.total}${allergyCount.critical ? ` · ${allergyCount.critical} CRIT` : ""}`}
                 />
               )}
             </div>
