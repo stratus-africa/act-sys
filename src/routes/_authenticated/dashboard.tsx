@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, CalendarDays, ClipboardList, AlertTriangle, ShieldAlert, Activity, FileWarning, UserCog, ArrowRight } from "lucide-react";
+import { Users, CalendarDays, ClipboardList, AlertTriangle, ShieldAlert, Activity, FileWarning, UserCog, ArrowRight, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ component: Dashboard });
 
@@ -19,7 +20,16 @@ type Stats = {
 };
 
 type RecentVisit = { id: string; scheduled_date: string; scheduled_time: string | null; status: string; visit_type: string; patient: { first_name: string; last_name: string } | null };
-type AlertItem = { id: string; kind: string; label: string; patient_id: string; patientName: string; meta?: string };
+type AlertKind = "fall" | "allergy" | "skin" | "consent";
+type AlertItem = { id: string; recordId: string; kind: AlertKind; label: string; patient_id: string; patientName: string; meta?: string };
+
+const KIND_LABEL: Record<AlertKind | "all", string> = { all: "All", fall: "Fall risk", allergy: "Allergy", skin: "Skin", consent: "Consent" };
+const KIND_ROUTE: Record<AlertKind, "/patients/$patientId/fall-risk" | "/patients/$patientId/allergies" | "/patients/$patientId/skin" | "/patients/$patientId/consent"> = {
+  fall: "/patients/$patientId/fall-risk",
+  allergy: "/patients/$patientId/allergies",
+  skin: "/patients/$patientId/skin",
+  consent: "/patients/$patientId/consent",
+};
 
 const today = () => new Date().toISOString().slice(0, 10);
 const weekStartIso = () => {
@@ -35,6 +45,8 @@ function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [filter, setFilter] = useState<AlertKind | "all">("all");
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let active = true;
@@ -99,14 +111,47 @@ function Dashboard() {
       })));
 
       const items: AlertItem[] = [];
-      fallRiskHigh.slice(0, 5).forEach((f: any) => items.push({ id: `f-${f.id}`, kind: "fall", label: "Fall risk", patient_id: f.patient_id, patientName: nameMap[f.patient_id] ?? "Patient", meta: `Score ${f.total_score}` }));
-      (allergies.data ?? []).slice(0, 5).forEach((a: any) => items.push({ id: `a-${a.id}`, kind: "allergy", label: "Critical allergy", patient_id: a.patient_id, patientName: nameMap[a.patient_id] ?? "Patient", meta: `${a.allergen} · ${a.severity}` }));
-      latestSkin.slice(0, 5).forEach((s: any) => items.push({ id: `s-${s.id}`, kind: "skin", label: "Abnormal skin", patient_id: s.patient_id, patientName: nameMap[s.patient_id] ?? "Patient", meta: s.assessment_date }));
-      (consents.data ?? []).slice(0, 5).forEach((c: any) => items.push({ id: `c-${c.id}`, kind: "consent", label: "Consent pending", patient_id: c.patient_id, patientName: nameMap[c.patient_id] ?? "Patient", meta: c.status }));
+      fallRiskHigh.slice(0, 5).forEach((f: any) => items.push({ id: `f-${f.id}`, recordId: f.id, kind: "fall", label: "Fall risk", patient_id: f.patient_id, patientName: nameMap[f.patient_id] ?? "Patient", meta: `Score ${f.total_score}` }));
+      (allergies.data ?? []).slice(0, 5).forEach((a: any) => items.push({ id: `a-${a.id}`, recordId: a.id, kind: "allergy", label: "Critical allergy", patient_id: a.patient_id, patientName: nameMap[a.patient_id] ?? "Patient", meta: `${a.allergen} · ${a.severity}` }));
+      latestSkin.slice(0, 5).forEach((s: any) => items.push({ id: `s-${s.id}`, recordId: s.id, kind: "skin", label: "Abnormal skin", patient_id: s.patient_id, patientName: nameMap[s.patient_id] ?? "Patient", meta: s.assessment_date }));
+      (consents.data ?? []).slice(0, 5).forEach((c: any) => items.push({ id: `c-${c.id}`, recordId: c.id, kind: "consent", label: "Consent pending", patient_id: c.patient_id, patientName: nameMap[c.patient_id] ?? "Patient", meta: c.status }));
       setAlerts(items);
     })();
     return () => { active = false; };
   }, []);
+
+  const resolveAlert = async (a: AlertItem) => {
+    if (a.kind === "skin") {
+      const { error } = await supabase.from("skin_assessments").update({ status: "normal" }).eq("id", a.recordId);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Skin assessment marked normal");
+      setAlerts((cur) => cur.filter((x) => x.id !== a.id));
+      return;
+    }
+    if (a.kind === "allergy") {
+      const { error } = await supabase.from("patient_allergies").update({ active: false }).eq("id", a.recordId);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Allergy resolved");
+      setAlerts((cur) => cur.filter((x) => x.id !== a.id));
+      return;
+    }
+    if (a.kind === "consent") {
+      const { error } = await supabase.from("patient_consents").update({ status: "complete" }).eq("id", a.recordId);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Consent marked complete");
+      setAlerts((cur) => cur.filter((x) => x.id !== a.id));
+      return;
+    }
+    // fall risk: just dismiss from view (clinical data preserved)
+    setDismissed((s) => new Set(s).add(a.id));
+    toast.success("Acknowledged");
+  };
+
+  const visibleAlerts = alerts
+    .filter((a) => !dismissed.has(a.id))
+    .filter((a) => filter === "all" || a.kind === filter);
+  const counts: Record<string, number> = { all: alerts.length };
+  alerts.forEach((a) => { counts[a.kind] = (counts[a.kind] ?? 0) + 1; });
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -167,21 +212,41 @@ function Dashboard() {
           <section className="border border-border bg-card">
             <div className="px-6 py-4 border-b border-border flex justify-between items-center">
               <h3 className="text-xs font-bold uppercase tracking-widest">Clinical Alerts</h3>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{alerts.length} items</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{visibleAlerts.length}/{alerts.length}</span>
             </div>
-            {alerts.length === 0 ? (
+            <div className="px-6 py-2 border-b border-border flex flex-wrap gap-1">
+              {(["all", "fall", "allergy", "skin", "consent"] as const).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setFilter(k)}
+                  className={"text-[10px] font-mono uppercase tracking-widest px-2 py-1 border " + (filter === k ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground")}
+                >
+                  {KIND_LABEL[k]} {counts[k] ? `(${counts[k]})` : ""}
+                </button>
+              ))}
+            </div>
+            {visibleAlerts.length === 0 ? (
               <div className="px-6 py-8 text-sm text-muted-foreground">No active alerts. 🎉</div>
             ) : (
               <ul className="divide-y divide-border">
-                {alerts.slice(0, 10).map((a) => (
-                  <li key={a.id}>
-                    <Link to="/patients/$patientId" params={{ patientId: a.patient_id }} className="px-6 py-3 flex items-center gap-3 hover:bg-muted/30">
-                      <span className={"size-2 rounded-full " + (a.kind === "fall" || a.kind === "allergy" ? "bg-destructive" : "bg-amber-500")} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold truncate">{a.patientName}</div>
-                        <div className="text-[11px] font-mono uppercase text-muted-foreground truncate">{a.label}{a.meta ? ` · ${a.meta}` : ""}</div>
-                      </div>
-                      <ArrowRight className="size-3.5 text-muted-foreground" />
+                {visibleAlerts.slice(0, 10).map((a) => (
+                  <li key={a.id} className="px-6 py-3 flex items-center gap-3 hover:bg-muted/30">
+                    <span className={"size-2 rounded-full shrink-0 " + (a.kind === "fall" || a.kind === "allergy" ? "bg-destructive" : "bg-amber-500")} />
+                    <div className="flex-1 min-w-0">
+                      <Link to="/patients/$patientId" params={{ patientId: a.patient_id }} className="text-sm font-bold truncate hover:underline block">{a.patientName}</Link>
+                      <div className="text-[11px] font-mono uppercase text-muted-foreground truncate">{a.label}{a.meta ? ` · ${a.meta}` : ""}</div>
+                    </div>
+                    {hasRole("admin") || hasRole("rn") ? (
+                      <button
+                        onClick={() => resolveAlert(a)}
+                        title={a.kind === "fall" ? "Acknowledge" : "Resolve"}
+                        className="text-[10px] font-mono uppercase tracking-widest px-2 py-1 border border-border text-muted-foreground hover:text-primary hover:border-primary inline-flex items-center gap-1"
+                      >
+                        <Check className="size-3" /> {a.kind === "fall" ? "Ack" : "Resolve"}
+                      </button>
+                    ) : null}
+                    <Link to={KIND_ROUTE[a.kind]} params={{ patientId: a.patient_id }} className="text-[10px] font-mono uppercase tracking-widest text-primary hover:underline inline-flex items-center gap-1">
+                      Open <ArrowRight className="size-3" />
                     </Link>
                   </li>
                 ))}

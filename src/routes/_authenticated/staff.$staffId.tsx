@@ -5,13 +5,25 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope } from "lucide-react";
+import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Check, X, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/$staffId")({ component: StaffProfilePage });
 
 type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; created_at: string };
 const ROLES = ["admin", "rn", "caregiver", "patient"] as const;
 type RoleName = (typeof ROLES)[number];
+
+const PERMISSION_MATRIX: { label: string; roles: RoleName[] }[] = [
+  { label: "Manage staff & invitations", roles: ["admin"] },
+  { label: "Assign patients to staff", roles: ["admin", "rn"] },
+  { label: "View all patient records", roles: ["admin", "rn"] },
+  { label: "Create & edit clinical assessments", roles: ["admin", "rn"] },
+  { label: "Add / edit allergies & care plans", roles: ["admin", "rn"] },
+  { label: "Document visits for assigned patients", roles: ["admin", "rn", "caregiver"] },
+  { label: "Submit timesheets", roles: ["admin", "rn", "caregiver"] },
+  { label: "Approve timesheets", roles: ["admin", "rn"] },
+  { label: "View own patient profile only", roles: ["patient"] },
+];
 
 function StaffProfilePage() {
   const { staffId } = Route.useParams();
@@ -241,6 +253,27 @@ function StaffProfilePage() {
                 <div><div className="text-2xl font-extrabold">{timesheets.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Timesheets</div></div>
                 <div><div className="text-2xl font-extrabold">{cgAssessments.length + rnAssessments.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Assessments</div></div>
               </div>
+            </div>
+
+            <div className="border border-border p-5 bg-card space-y-3">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1"><Lock className="size-3" /> Role Permissions</div>
+              {roles.length === 0 ? (
+                <div className="text-xs text-muted-foreground">No roles assigned — no access granted.</div>
+              ) : (
+                <ul className="space-y-1.5">
+                  {PERMISSION_MATRIX.map((p) => {
+                    const granted = p.roles.some((r) => roles.includes(r));
+                    return (
+                      <li key={p.label} className="flex items-start gap-2 text-xs">
+                        {granted
+                          ? <Check className="size-3.5 text-primary mt-0.5 shrink-0" />
+                          : <X className="size-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />}
+                        <span className={granted ? "" : "text-muted-foreground/60 line-through"}>{p.label}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           </div>
         </div>
