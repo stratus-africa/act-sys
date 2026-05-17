@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon } from "lucide-react";
+import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/$staffId")({ component: StaffProfilePage });
 
@@ -26,17 +26,19 @@ function StaffProfilePage() {
   const [visits, setVisits] = useState<any[]>([]);
   const [timesheets, setTimesheets] = useState<any[]>([]);
   const [cgAssessments, setCgAssessments] = useState<any[]>([]);
+  const [rnAssessments, setRnAssessments] = useState<any[]>([]);
   const [edit, setEdit] = useState({ full_name: "", phone: "", license_no: "" });
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", staffId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", staffId),
       supabase.from("patient_assignments").select("*, patients:patient_id(id, first_name, last_name)").eq("staff_id", staffId),
       supabase.from("visits").select("id, scheduled_date, scheduled_time, status, patient_id, patients:patient_id(first_name, last_name)").eq("staff_id", staffId).order("scheduled_date", { ascending: false }).limit(10),
       supabase.from("timesheets").select("id, week_start, hours, status").eq("staff_id", staffId).order("week_start", { ascending: false }).limit(8),
       supabase.from("caregiver_assessments").select("id, service_date, patient_id, patients:patient_id(first_name, last_name), tasks").eq("caregiver_id", staffId).order("service_date", { ascending: false }).limit(8),
+      supabase.from("rn_assessments").select("id, assessment_date, patient_id, patients:patient_id(first_name, last_name), tasks").eq("nurse_id", staffId).order("assessment_date", { ascending: false }).limit(8),
     ]);
     setProfile(p as Profile | null);
     setRoles(((r ?? []) as Array<{ role: RoleName }>).map((x) => x.role));
@@ -44,6 +46,7 @@ function StaffProfilePage() {
     setVisits(v ?? []);
     setTimesheets(ts ?? []);
     setCgAssessments(cga ?? []);
+    setRnAssessments(rna ?? []);
     if (p) setEdit({ full_name: p.full_name ?? "", phone: p.phone ?? "", license_no: p.license_no ?? "" });
   }, [staffId]);
 
@@ -162,6 +165,29 @@ function StaffProfilePage() {
                 )}
               </FormSection>
             )}
+
+            {(roles.includes("rn") || roles.includes("admin") || rnAssessments.length > 0) && (
+              <FormSection title="RN Assessments Performed">
+                {rnAssessments.length === 0 ? <div className="text-xs text-muted-foreground">No RN assessments on file.</div> : (
+                  <ul className="divide-y divide-border">
+                    {rnAssessments.map((a) => {
+                      const taskMap = (a.tasks ?? {}) as Record<string, { observed?: string }>;
+                      const noCount = Object.values(taskMap).filter((t) => t?.observed === "no").length;
+                      const completed = Object.values(taskMap).filter((t) => !!t?.observed).length;
+                      return (
+                        <li key={a.id} className="py-2 flex items-center justify-between text-sm">
+                          <Link to="/patients/$patientId/rn-assessment" params={{ patientId: a.patient_id }} className="hover:underline">
+                            <div className="font-bold flex items-center gap-2"><Stethoscope className="size-3.5 text-primary" />{a.patients?.first_name} {a.patients?.last_name}</div>
+                            <div className="text-[11px] font-mono text-muted-foreground">{a.assessment_date} · {completed} tasks</div>
+                          </Link>
+                          <span className={"text-[10px] font-bold uppercase " + (noCount > 0 ? "text-destructive" : "text-primary")}>{noCount > 0 ? `${noCount} concern${noCount > 1 ? "s" : ""}` : "all clear"}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </FormSection>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -213,7 +239,7 @@ function StaffProfilePage() {
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div><div className="text-2xl font-extrabold">{visits.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Visits</div></div>
                 <div><div className="text-2xl font-extrabold">{timesheets.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Timesheets</div></div>
-                <div><div className="text-2xl font-extrabold">{cgAssessments.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">CG Assess</div></div>
+                <div><div className="text-2xl font-extrabold">{cgAssessments.length + rnAssessments.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Assessments</div></div>
               </div>
             </div>
           </div>
