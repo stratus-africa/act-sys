@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel } from "@/components/app/FormSection";
+import { toast } from "sonner";
+import { CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/visits")({ component: OrgVisits });
 
@@ -21,6 +24,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function OrgVisits() {
+  const { primaryRole } = useCurrentUser();
+  const canEdit = primaryRole === "admin" || primaryRole === "rn";
+
   const [visits, setVisits] = useState<Visit[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [staff, setStaff] = useState<Profile[]>([]);
@@ -29,9 +35,12 @@ function OrgVisits() {
   const [to, setTo] = useState(new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
   const [status, setStatus] = useState<string>("all");
   const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [reschedule, setReschedule] = useState<Visit | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const [newStaff, setNewStaff] = useState<string>("");
 
-  useEffect(() => {
-    (async () => {
+  const load = useCallback(async () => {
       setLoading(true);
       const [{ data: v }, { data: p }, { data: s }] = await Promise.all([
         supabase.from("visits").select("*").gte("scheduled_date", from).lte("scheduled_date", to).order("scheduled_date").order("scheduled_time"),
@@ -42,8 +51,32 @@ function OrgVisits() {
       setPatients((p ?? []) as Patient[]);
       setStaff((s ?? []) as Profile[]);
       setLoading(false);
-    })();
   }, [from, to]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openReschedule = (v: Visit) => {
+    setReschedule(v);
+    setNewDate(v.scheduled_date);
+    setNewTime(v.scheduled_time ?? "");
+    setNewStaff(v.staff_id ?? "");
+  };
+
+  const saveReschedule = async () => {
+    if (!reschedule) return;
+    // Only update scheduling fields — check_in_at and check_out_at remain untouched
+    const { error } = await supabase.from("visits")
+      .update({
+        scheduled_date: newDate,
+        scheduled_time: newTime || null,
+        staff_id: newStaff || null,
+      })
+      .eq("id", reschedule.id);
+    if (error) return toast.error(error.message);
+    toast.success("Visit rescheduled — check-in/out timestamps preserved");
+    setReschedule(null);
+    load();
+  };
 
   const patientName = (id: string) => {
     const p = patients.find((x) => x.id === id);
@@ -131,6 +164,13 @@ function OrgVisits() {
                         <td className="px-4 py-2 capitalize">{v.visit_type}</td>
                         <td className="px-4 py-2"><span className={"px-2 py-0.5 rounded-full text-[10px] font-bold uppercase " + (STATUS_COLORS[v.status] ?? "bg-muted text-muted-foreground")}>{v.status.replace("_", " ")}</span></td>
                         <td className="px-4 py-2 font-mono text-[10px] text-muted-foreground">{dur !== null ? `${dur} min` : "—"}</td>
+                        <td className="px-4 py-2 text-right">
+                          {canEdit && (
+                            <button onClick={() => openReschedule(v)} className="text-[10px] font-mono uppercase text-primary hover:underline inline-flex items-center gap-1">
+                              <CalendarClock className="size-3" /> Reschedule
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -138,6 +178,38 @@ function OrgVisits() {
               </table>
             </div>
           ))}
+
+        {reschedule && (
+          <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setReschedule(null)}>
+            <div className="bg-card border border-border w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div>
+                <div className="text-[10px] font-mono uppercase text-muted-foreground">Reschedule visit</div>
+                <h3 className="text-sm font-bold">{patientName(reschedule.patient_id)}</h3>
+              </div>
+              <div className="text-[10px] font-mono uppercase text-muted-foreground bg-muted/40 p-2">
+                Originally: {reschedule.scheduled_date} {reschedule.scheduled_time ?? ""}
+                {(reschedule.check_in_at || reschedule.check_out_at) && (
+                  <div className="mt-1">Check-in/out timestamps will be preserved.</div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><FieldLabel>New date</FieldLabel><input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm" /></div>
+                <div><FieldLabel>New time</FieldLabel><input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm" /></div>
+              </div>
+              <div>
+                <FieldLabel>Assign staff</FieldLabel>
+                <select value={newStaff} onChange={(e) => setNewStaff(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm">
+                  <option value="">Unassigned</option>
+                  {staff.map((s) => <option key={s.id} value={s.id}>{s.full_name ?? s.email}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setReschedule(null)} className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground hover:text-foreground">Cancel</button>
+                <button onClick={saveReschedule} className="bg-primary text-primary-foreground px-4 py-2 text-sm font-bold">Save</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
