@@ -16,6 +16,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
+import { Route as AuthenticatedPatientsPatientIdFallRiskRouteImport } from './routes/_authenticated/patients.$patientId.fall-risk'
 import { Route as AuthenticatedPatientsPatientIdConsentRouteImport } from './routes/_authenticated/patients.$patientId.consent'
 
 const LoginRoute = LoginRouteImport.update({
@@ -55,6 +56,12 @@ const AuthenticatedPatientsPatientIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
+const AuthenticatedPatientsPatientIdFallRiskRoute =
+  AuthenticatedPatientsPatientIdFallRiskRouteImport.update({
+    id: '/fall-risk',
+    path: '/fall-risk',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
 const AuthenticatedPatientsPatientIdConsentRoute =
   AuthenticatedPatientsPatientIdConsentRouteImport.update({
     id: '/consent',
@@ -69,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
   '/patients/$patientId/': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +85,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRoutesById {
@@ -88,6 +97,7 @@ export interface FileRoutesById {
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/_authenticated/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
   '/_authenticated/patients/$patientId/': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/patients/$patientId'
     | '/patients/'
     | '/patients/$patientId/consent'
+    | '/patients/$patientId/fall-risk'
     | '/patients/$patientId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/patients'
     | '/patients/$patientId/consent'
+    | '/patients/$patientId/fall-risk'
     | '/patients/$patientId'
   id:
     | '__root__'
@@ -117,6 +129,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patients/$patientId'
     | '/_authenticated/patients/'
     | '/_authenticated/patients/$patientId/consent'
+    | '/_authenticated/patients/$patientId/fall-risk'
     | '/_authenticated/patients/$patientId/'
   fileRoutesById: FileRoutesById
 }
@@ -177,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdIndexRouteImport
       parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
+    '/_authenticated/patients/$patientId/fall-risk': {
+      id: '/_authenticated/patients/$patientId/fall-risk'
+      path: '/fall-risk'
+      fullPath: '/patients/$patientId/fall-risk'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdFallRiskRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
     '/_authenticated/patients/$patientId/consent': {
       id: '/_authenticated/patients/$patientId/consent'
       path: '/consent'
@@ -189,6 +209,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPatientsPatientIdRouteChildren {
   AuthenticatedPatientsPatientIdConsentRoute: typeof AuthenticatedPatientsPatientIdConsentRoute
+  AuthenticatedPatientsPatientIdFallRiskRoute: typeof AuthenticatedPatientsPatientIdFallRiskRoute
   AuthenticatedPatientsPatientIdIndexRoute: typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 
@@ -196,6 +217,8 @@ const AuthenticatedPatientsPatientIdRouteChildren: AuthenticatedPatientsPatientI
   {
     AuthenticatedPatientsPatientIdConsentRoute:
       AuthenticatedPatientsPatientIdConsentRoute,
+    AuthenticatedPatientsPatientIdFallRiskRoute:
+      AuthenticatedPatientsPatientIdFallRiskRoute,
     AuthenticatedPatientsPatientIdIndexRoute:
       AuthenticatedPatientsPatientIdIndexRoute,
   }
@@ -230,3 +253,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
