@@ -149,7 +149,7 @@ function OrgVisits() {
               </div>
               <table className="w-full text-sm">
                 <thead className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted">
-                  <tr><th className="px-4 py-2 text-left">Time</th><th className="px-4 py-2 text-left">Patient</th><th className="px-4 py-2 text-left">Staff</th><th className="px-4 py-2 text-left">Type</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Duration</th></tr>
+                  <tr><th className="px-4 py-2 text-left">Time</th><th className="px-4 py-2 text-left">Patient</th><th className="px-4 py-2 text-left">Staff</th><th className="px-4 py-2 text-left">Type</th><th className="px-4 py-2 text-left">Status</th><th className="px-4 py-2 text-left">Duration</th><th className="px-4 py-2 text-right">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {vs.map((v) => {
