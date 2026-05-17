@@ -55,7 +55,7 @@ function PatientShell() {
               {consent?.status !== "complete" && <PrecautionBadge variant="amber" label="CONSENT PENDING" />}
               {skin && (
                 <PrecautionBadge
-                  variant={skin.status === "abnormal" ? "red" : "amber"}
+                  variant={skin.status === "abnormal" ? "red" : "neutral"}
                   label={`SKIN ${skin.status.toUpperCase()} · ${skin.assessment_date}`}
                 />
               )}
