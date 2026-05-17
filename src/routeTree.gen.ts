@@ -21,8 +21,11 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
+import { Route as AuthenticatedPatientsPatientIdVisitsRouteImport } from './routes/_authenticated/patients.$patientId.visits'
 import { Route as AuthenticatedPatientsPatientIdFallRiskRouteImport } from './routes/_authenticated/patients.$patientId.fall-risk'
+import { Route as AuthenticatedPatientsPatientIdDocumentsRouteImport } from './routes/_authenticated/patients.$patientId.documents'
 import { Route as AuthenticatedPatientsPatientIdConsentRouteImport } from './routes/_authenticated/patients.$patientId.consent'
+import { Route as AuthenticatedPatientsPatientIdCarePlanRouteImport } from './routes/_authenticated/patients.$patientId.care-plan'
 import { Route as AuthenticatedPatientsPatientIdAssessmentRouteImport } from './routes/_authenticated/patients.$patientId.assessment'
 
 const LoginRoute = LoginRouteImport.update({
@@ -87,16 +90,34 @@ const AuthenticatedPatientsPatientIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
+const AuthenticatedPatientsPatientIdVisitsRoute =
+  AuthenticatedPatientsPatientIdVisitsRouteImport.update({
+    id: '/visits',
+    path: '/visits',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
 const AuthenticatedPatientsPatientIdFallRiskRoute =
   AuthenticatedPatientsPatientIdFallRiskRouteImport.update({
     id: '/fall-risk',
     path: '/fall-risk',
     getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
+const AuthenticatedPatientsPatientIdDocumentsRoute =
+  AuthenticatedPatientsPatientIdDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
 const AuthenticatedPatientsPatientIdConsentRoute =
   AuthenticatedPatientsPatientIdConsentRouteImport.update({
     id: '/consent',
     path: '/consent',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
+const AuthenticatedPatientsPatientIdCarePlanRoute =
+  AuthenticatedPatientsPatientIdCarePlanRouteImport.update({
+    id: '/care-plan',
+    path: '/care-plan',
     getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
 const AuthenticatedPatientsPatientIdAssessmentRoute =
@@ -118,8 +139,11 @@ export interface FileRoutesByFullPath {
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
+  '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
   '/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/patients/$patientId/documents': typeof AuthenticatedPatientsPatientIdDocumentsRoute
   '/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
+  '/patients/$patientId/visits': typeof AuthenticatedPatientsPatientIdVisitsRoute
   '/patients/$patientId/': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -133,8 +157,11 @@ export interface FileRoutesByTo {
   '/visits': typeof AuthenticatedVisitsRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
+  '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
   '/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/patients/$patientId/documents': typeof AuthenticatedPatientsPatientIdDocumentsRoute
   '/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
+  '/patients/$patientId/visits': typeof AuthenticatedPatientsPatientIdVisitsRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRoutesById {
@@ -151,8 +178,11 @@ export interface FileRoutesById {
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
+  '/_authenticated/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
   '/_authenticated/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/_authenticated/patients/$patientId/documents': typeof AuthenticatedPatientsPatientIdDocumentsRoute
   '/_authenticated/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
+  '/_authenticated/patients/$patientId/visits': typeof AuthenticatedPatientsPatientIdVisitsRoute
   '/_authenticated/patients/$patientId/': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -169,8 +199,11 @@ export interface FileRouteTypes {
     | '/patients/$patientId'
     | '/patients/'
     | '/patients/$patientId/assessment'
+    | '/patients/$patientId/care-plan'
     | '/patients/$patientId/consent'
+    | '/patients/$patientId/documents'
     | '/patients/$patientId/fall-risk'
+    | '/patients/$patientId/visits'
     | '/patients/$patientId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -184,8 +217,11 @@ export interface FileRouteTypes {
     | '/visits'
     | '/patients'
     | '/patients/$patientId/assessment'
+    | '/patients/$patientId/care-plan'
     | '/patients/$patientId/consent'
+    | '/patients/$patientId/documents'
     | '/patients/$patientId/fall-risk'
+    | '/patients/$patientId/visits'
     | '/patients/$patientId'
   id:
     | '__root__'
@@ -201,8 +237,11 @@ export interface FileRouteTypes {
     | '/_authenticated/patients/$patientId'
     | '/_authenticated/patients/'
     | '/_authenticated/patients/$patientId/assessment'
+    | '/_authenticated/patients/$patientId/care-plan'
     | '/_authenticated/patients/$patientId/consent'
+    | '/_authenticated/patients/$patientId/documents'
     | '/_authenticated/patients/$patientId/fall-risk'
+    | '/_authenticated/patients/$patientId/visits'
     | '/_authenticated/patients/$patientId/'
   fileRoutesById: FileRoutesById
 }
@@ -298,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdIndexRouteImport
       parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
+    '/_authenticated/patients/$patientId/visits': {
+      id: '/_authenticated/patients/$patientId/visits'
+      path: '/visits'
+      fullPath: '/patients/$patientId/visits'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdVisitsRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
     '/_authenticated/patients/$patientId/fall-risk': {
       id: '/_authenticated/patients/$patientId/fall-risk'
       path: '/fall-risk'
@@ -305,11 +351,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdFallRiskRouteImport
       parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
+    '/_authenticated/patients/$patientId/documents': {
+      id: '/_authenticated/patients/$patientId/documents'
+      path: '/documents'
+      fullPath: '/patients/$patientId/documents'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdDocumentsRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
     '/_authenticated/patients/$patientId/consent': {
       id: '/_authenticated/patients/$patientId/consent'
       path: '/consent'
       fullPath: '/patients/$patientId/consent'
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdConsentRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
+    '/_authenticated/patients/$patientId/care-plan': {
+      id: '/_authenticated/patients/$patientId/care-plan'
+      path: '/care-plan'
+      fullPath: '/patients/$patientId/care-plan'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdCarePlanRouteImport
       parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
     '/_authenticated/patients/$patientId/assessment': {
@@ -324,8 +384,11 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPatientsPatientIdRouteChildren {
   AuthenticatedPatientsPatientIdAssessmentRoute: typeof AuthenticatedPatientsPatientIdAssessmentRoute
+  AuthenticatedPatientsPatientIdCarePlanRoute: typeof AuthenticatedPatientsPatientIdCarePlanRoute
   AuthenticatedPatientsPatientIdConsentRoute: typeof AuthenticatedPatientsPatientIdConsentRoute
+  AuthenticatedPatientsPatientIdDocumentsRoute: typeof AuthenticatedPatientsPatientIdDocumentsRoute
   AuthenticatedPatientsPatientIdFallRiskRoute: typeof AuthenticatedPatientsPatientIdFallRiskRoute
+  AuthenticatedPatientsPatientIdVisitsRoute: typeof AuthenticatedPatientsPatientIdVisitsRoute
   AuthenticatedPatientsPatientIdIndexRoute: typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 
@@ -333,10 +396,16 @@ const AuthenticatedPatientsPatientIdRouteChildren: AuthenticatedPatientsPatientI
   {
     AuthenticatedPatientsPatientIdAssessmentRoute:
       AuthenticatedPatientsPatientIdAssessmentRoute,
+    AuthenticatedPatientsPatientIdCarePlanRoute:
+      AuthenticatedPatientsPatientIdCarePlanRoute,
     AuthenticatedPatientsPatientIdConsentRoute:
       AuthenticatedPatientsPatientIdConsentRoute,
+    AuthenticatedPatientsPatientIdDocumentsRoute:
+      AuthenticatedPatientsPatientIdDocumentsRoute,
     AuthenticatedPatientsPatientIdFallRiskRoute:
       AuthenticatedPatientsPatientIdFallRiskRoute,
+    AuthenticatedPatientsPatientIdVisitsRoute:
+      AuthenticatedPatientsPatientIdVisitsRoute,
     AuthenticatedPatientsPatientIdIndexRoute:
       AuthenticatedPatientsPatientIdIndexRoute,
   }
