@@ -698,6 +698,7 @@ export type Database = {
           id: string
           invited_by: string | null
           role: Database["public"]["Enums"]["app_role"]
+          token: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -707,6 +708,7 @@ export type Database = {
           id?: string
           invited_by?: string | null
           role: Database["public"]["Enums"]["app_role"]
+          token?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -716,6 +718,7 @@ export type Database = {
           id?: string
           invited_by?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          token?: string | null
         }
         Relationships: []
       }
@@ -753,6 +756,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      timesheet_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          timesheet_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          timesheet_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          timesheet_id?: string
+        }
+        Relationships: []
       }
       timesheets: {
         Row: {
