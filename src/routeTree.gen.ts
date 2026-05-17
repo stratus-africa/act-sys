@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
+import { Route as AuthenticatedPatientsDocumentsRouteImport } from './routes/_authenticated/patients..documents'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
 import { Route as AuthenticatedPatientsPatientIdVisitsRouteImport } from './routes/_authenticated/patients.$patientId.visits'
@@ -76,6 +77,12 @@ const AuthenticatedPatientsIndexRoute =
   AuthenticatedPatientsIndexRouteImport.update({
     id: '/patients/',
     path: '/patients/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPatientsDocumentsRoute =
+  AuthenticatedPatientsDocumentsRouteImport.update({
+    id: '/patients/documents',
+    path: '/patients/documents',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedPatientsPatientIdRoute =
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
+  '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedStaffRoute
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/visits': typeof AuthenticatedVisitsRoute
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
+  '/_authenticated/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/_authenticated/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/timesheets'
     | '/visits'
     | '/patients/$patientId'
+    | '/patients/documents'
     | '/patients/'
     | '/patients/$patientId/assessment'
     | '/patients/$patientId/care-plan'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/patients/documents'
     | '/patients'
     | '/patients/$patientId/assessment'
     | '/patients/$patientId/care-plan'
@@ -235,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/timesheets'
     | '/_authenticated/visits'
     | '/_authenticated/patients/$patientId'
+    | '/_authenticated/patients/documents'
     | '/_authenticated/patients/'
     | '/_authenticated/patients/$patientId/assessment'
     | '/_authenticated/patients/$patientId/care-plan'
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/patients'
       fullPath: '/patients/'
       preLoaderRoute: typeof AuthenticatedPatientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/patients/documents': {
+      id: '/_authenticated/patients/documents'
+      path: '/patients/documents'
+      fullPath: '/patients/documents'
+      preLoaderRoute: typeof AuthenticatedPatientsDocumentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/patients/$patientId': {
@@ -423,6 +443,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTimesheetsRoute: typeof AuthenticatedTimesheetsRoute
   AuthenticatedVisitsRoute: typeof AuthenticatedVisitsRoute
   AuthenticatedPatientsPatientIdRoute: typeof AuthenticatedPatientsPatientIdRouteWithChildren
+  AuthenticatedPatientsDocumentsRoute: typeof AuthenticatedPatientsDocumentsRoute
   AuthenticatedPatientsIndexRoute: typeof AuthenticatedPatientsIndexRoute
 }
 
@@ -435,6 +456,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedVisitsRoute: AuthenticatedVisitsRoute,
   AuthenticatedPatientsPatientIdRoute:
     AuthenticatedPatientsPatientIdRouteWithChildren,
+  AuthenticatedPatientsDocumentsRoute: AuthenticatedPatientsDocumentsRoute,
   AuthenticatedPatientsIndexRoute: AuthenticatedPatientsIndexRoute,
 }
 
@@ -450,3 +472,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
