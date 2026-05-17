@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      care_plan_tasks: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          created_by: string | null
+          frequency: string | null
+          id: string
+          patient_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          frequency?: string | null
+          id?: string
+          patient_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          frequency?: string | null
+          id?: string
+          patient_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fall_risk_assessments: {
         Row: {
           age_65: boolean
@@ -432,6 +468,54 @@ export type Database = {
           },
         ]
       }
+      patient_documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          patient_id: string
+          signature_typed: string | null
+          signature_url: string | null
+          signed_at: string | null
+          signed_by: string | null
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          patient_id: string
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          patient_id?: string
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           address: string | null
@@ -576,6 +660,41 @@ export type Database = {
         }
         Relationships: []
       }
+      task_completions: {
+        Row: {
+          completed_at: string
+          completed_by: string | null
+          id: string
+          notes: string | null
+          patient_id: string
+          task_id: string
+        }
+        Insert: {
+          completed_at?: string
+          completed_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_id: string
+          task_id: string
+        }
+        Update: {
+          completed_at?: string
+          completed_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "care_plan_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -594,6 +713,51 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      visits: {
+        Row: {
+          check_in_at: string | null
+          check_out_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          patient_id: string
+          scheduled_date: string
+          scheduled_time: string | null
+          staff_id: string | null
+          status: string
+          updated_at: string
+          visit_type: string
+        }
+        Insert: {
+          check_in_at?: string | null
+          check_out_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          scheduled_date: string
+          scheduled_time?: string | null
+          staff_id?: string | null
+          status?: string
+          updated_at?: string
+          visit_type?: string
+        }
+        Update: {
+          check_in_at?: string | null
+          check_out_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          scheduled_date?: string
+          scheduled_time?: string | null
+          staff_id?: string | null
+          status?: string
+          updated_at?: string
+          visit_type?: string
         }
         Relationships: []
       }
