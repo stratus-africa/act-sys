@@ -23,7 +23,9 @@ const PRESSURE_AREAS: Array<{ key: string; label: string }> = [
 ];
 
 type Side = "front" | "back";
-type Marking = { x: number; y: number; side: Side; label: string };
+type Marking = { x: number; y: number; side: Side; label: string; area?: string };
+
+const areaLabel = (k?: string) => PRESSURE_AREAS.find((a) => a.key === k)?.label;
 
 async function uploadSig(sig: SignatureValue, patientId: string): Promise<string | null> {
   if (!sig.dataUrl) return null;
@@ -35,10 +37,10 @@ async function uploadSig(sig: SignatureValue, patientId: string): Promise<string
 }
 
 function BodyCanvas({
-  side, image, markings, editable, onAdd, onRemove,
+  side, image, markings, editable, onAdd, onRemove, large,
 }: {
   side: Side; image: string; markings: Marking[]; editable: boolean;
-  onAdd: (x: number, y: number) => void; onRemove: (idx: number) => void;
+  onAdd: (x: number, y: number) => void; onRemove: (idx: number) => void; large?: boolean;
 }) {
   const sideMarks = markings.map((m, i) => ({ m, i })).filter(({ m }) => m.side === side);
   return (
@@ -50,7 +52,7 @@ function BodyCanvas({
           const r = e.currentTarget.getBoundingClientRect();
           onAdd(((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100);
         }}
-        className={"relative border-2 border-border bg-card " + (editable ? "cursor-crosshair" : "cursor-not-allowed opacity-90")}
+        className={"relative border-2 border-border bg-card mx-auto " + (large ? "max-w-md " : "") + (editable ? "cursor-crosshair" : "cursor-not-allowed opacity-90")}
       >
         <img src={image} alt={`Body diagram ${side}`} className="w-full h-auto pointer-events-none select-none" />
         {sideMarks.map(({ m, i }, idx) => (
@@ -60,7 +62,7 @@ function BodyCanvas({
             onClick={(e) => { e.stopPropagation(); if (editable) onRemove(i); }}
             className="absolute -ml-3 -mt-3 w-6 h-6 rounded-full bg-destructive text-destructive-foreground border-2 border-background shadow-md text-[10px] font-bold flex items-center justify-center hover:scale-125 transition"
             style={{ left: `${m.x}%`, top: `${m.y}%` }}
-            title={m.label || `Marker ${idx + 1}`}
+            title={[areaLabel(m.area), m.label].filter(Boolean).join(" — ") || `Marker ${idx + 1}`}
             aria-label={`Remove ${m.label || `marker ${idx + 1}`}`}
           >
             {idx + 1}
@@ -92,6 +94,15 @@ function SkinPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [newRemark, setNewRemark] = useState("");
+  const viewKey = `skin_view_${patientId}`;
+  const [view, setView] = useState<Side>(() => {
+    if (typeof window === "undefined") return "front";
+    return (localStorage.getItem(viewKey) as Side) || "front";
+  });
+  useEffect(() => { localStorage.setItem(viewKey, view); }, [view, viewKey]);
+  const [pending, setPending] = useState<{ x: number; y: number; side: Side } | null>(null);
+  const [pendingArea, setPendingArea] = useState<string>("");
+  const [pendingLabel, setPendingLabel] = useState<string>("");
 
   const loadHistory = () => {
     supabase.from("skin_assessments").select("*").eq("patient_id", patientId).order("assessment_date", { ascending: false }).then(({ data }) => setHistory(data ?? []));
@@ -108,9 +119,17 @@ function SkinPage() {
   const editable = canCreate && status === "abnormal";
 
   const addMarker = (side: Side, x: number, y: number) => {
-    const label = window.prompt(`Notation for marker on ${side}? (e.g. "bruise", "stage 2 ulcer")`, "");
-    if (label === null) return;
-    setMarkings((m) => [...m, { x, y, side, label: label.trim() }]);
+    setPending({ x, y, side });
+    setPendingArea("");
+    setPendingLabel("");
+  };
+  const confirmMarker = () => {
+    if (!pending) return;
+    setMarkings((m) => [...m, { ...pending, label: pendingLabel.trim(), area: pendingArea || undefined }]);
+    if (pendingArea) {
+      setAreas((s) => ({ ...s, [pendingArea]: { affected: true, note: pendingLabel.trim() || s[pendingArea].note } }));
+    }
+    setPending(null);
   };
   const removeMark = (idx: number) => setMarkings((m) => m.filter((_, i) => i !== idx));
 
@@ -157,6 +176,49 @@ function SkinPage() {
   };
 
   const active = history.find((h) => h.id === activeId);
+  const printTarget = active ?? history[0];
+
+  const exportPdf = () => {
+    if (!printTarget) { toast.error("No assessment to export"); return; }
+    const w = window.open("", "_blank", "width=900,height=1100");
+    if (!w) { toast.error("Pop-up blocked"); return; }
+    const marks: Marking[] = Array.isArray(printTarget.markings) ? printTarget.markings : [];
+    const areasMap = (printTarget.pressure_areas ?? {}) as Record<string, { affected: boolean; note: string }>;
+    const renderSide = (s: Side, img: string) => {
+      const sideMarks = marks.map((m, i) => ({ m, i: marks.filter((mm, j) => mm.side === s && j <= i).length })).filter(({ m }) => m.side === s);
+      return `
+        <div style="text-align:center">
+          <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#666">${s}</div>
+          <div style="position:relative;display:inline-block;border:1px solid #000">
+            <img src="${img}" style="width:280px;height:auto;display:block"/>
+            ${sideMarks.map(({ m, i }) => `<span style="position:absolute;left:${m.x}%;top:${m.y}%;margin-left:-10px;margin-top:-10px;width:20px;height:20px;border-radius:50%;background:#c00;color:#fff;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;border:1px solid #fff">${i}</span>`).join("")}
+          </div>
+        </div>`;
+    };
+    const notationsList = marks.map((m, i) => `<li><b>#${i + 1}</b> [${m.side}] ${areaLabel(m.area) ? `<i>${areaLabel(m.area)}</i> — ` : ""}${m.label || "(no label)"}</li>`).join("");
+    const areasList = Object.entries(areasMap).filter(([, v]) => v?.affected).map(([k, v]) => `<li><b>${areaLabel(k) ?? k}</b>: ${v.note || "—"}</li>`).join("") || "<li>None</li>";
+    const historyList = history.map((h) => `<li>${h.assessment_date} — <b>${h.status}</b> (${Array.isArray(h.markings) ? h.markings.length : 0} notations)</li>`).join("");
+    const sigBlock = printTarget.clinician_signature_typed
+      ? `<div style="font-family:'Brush Script MT',cursive;font-size:24px">${printTarget.clinician_signature_typed}</div>`
+      : printTarget.clinician_signature_url
+      ? `<div style="font-size:10px;color:#666">[signature on file]</div>`
+      : `<div style="font-size:10px;color:#666">—</div>`;
+    w.document.write(`<!doctype html><html><head><title>Skin Assessment ${printTarget.assessment_date}</title>
+      <style>body{font-family:ui-sans-serif,system-ui,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 4px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #000;padding-bottom:4px;margin-top:18px}ul{padding-left:18px;font-size:12px;line-height:1.5}@media print{button{display:none}}</style></head><body>
+      <h1>Skin Assessment Report</h1>
+      <div style="font-size:11px;color:#666">Date: ${printTarget.assessment_date} · Status: <b>${printTarget.status}</b></div>
+      <h2>Body Diagrams</h2>
+      <div style="display:flex;gap:16px;justify-content:center">${renderSide("front", bodyFront)}${renderSide("back", bodyBack)}</div>
+      <h2>Notations</h2><ul>${notationsList || "<li>None</li>"}</ul>
+      <h2>Pressure-Sore Areas</h2><ul>${areasList}</ul>
+      <h2>General Notes</h2><div style="font-size:12px">${printTarget.general_notes || "—"}</div>
+      <h2>Clinician Signature</h2>${sigBlock}
+      <h2>Assessment History</h2><ul>${historyList || "<li>None</li>"}</ul>
+      <div style="margin-top:24px"><button onclick="window.print()">Print / Save as PDF</button></div>
+      </body></html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 500);
+  };
 
   return (
     <div className="space-y-8">
@@ -170,12 +232,22 @@ function SkinPage() {
             </div>
           )}
         </div>
-        {history[0] && (
-          <PrecautionBadge
-            variant={history[0].status === "abnormal" ? "red" : "neutral"}
-            label={`SKIN ${history[0].status.toUpperCase()} · ${history[0].assessment_date}`}
-          />
-        )}
+        <div className="flex items-center gap-3">
+          {history[0] && (
+            <PrecautionBadge
+              variant={history[0].status === "abnormal" ? "red" : "neutral"}
+              label={`SKIN ${history[0].status.toUpperCase()} · ${history[0].assessment_date}`}
+            />
+          )}
+          <button
+            type="button"
+            onClick={exportPdf}
+            disabled={!printTarget}
+            className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider border-2 border-foreground hover:bg-foreground hover:text-background disabled:opacity-40"
+          >
+            Export / Print PDF
+          </button>
+        </div>
       </div>
 
       {canCreate ? (
@@ -209,10 +281,27 @@ function SkinPage() {
               title="Body Diagram — Front & Back"
               description={editable ? "Click on either diagram to add a labeled notation. Click a marker to remove it." : "Set status to Abnormal to mark and notate affected areas."}
             >
-              <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-                <BodyCanvas side="front" image={bodyFront} markings={markings} editable={editable} onAdd={(x, y) => addMarker("front", x, y)} onRemove={removeMark} />
-                <BodyCanvas side="back" image={bodyBack} markings={markings} editable={editable} onAdd={(x, y) => addMarker("back", x, y)} onRemove={removeMark} />
+              <div className="flex justify-center gap-1 mb-4">
+                {(["front", "back"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setView(s)}
+                    className={"px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider border-2 " + (view === s ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-foreground")}
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
+              <BodyCanvas
+                side={view}
+                image={view === "front" ? bodyFront : bodyBack}
+                markings={markings}
+                editable={editable}
+                onAdd={(x, y) => addMarker(view, x, y)}
+                onRemove={removeMark}
+                large
+              />
               {markings.length > 0 && (
                 <div className="mt-4 border-t border-border pt-3 space-y-1">
                   <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Notations ({markings.length})</div>
@@ -220,7 +309,10 @@ function SkinPage() {
                     <div key={i} className="flex items-center gap-2 text-xs">
                       <span className="inline-flex w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold items-center justify-center">{i + 1}</span>
                       <span className="font-mono uppercase text-[10px] text-muted-foreground">{m.side}</span>
-                      <span className="flex-1">{m.label || <em className="text-muted-foreground">no label</em>}</span>
+                      <span className="flex-1">
+                        {areaLabel(m.area) && <span className="font-mono uppercase text-[10px] text-primary mr-1">{areaLabel(m.area)}</span>}
+                        {m.label || <em className="text-muted-foreground">no label</em>}
+                      </span>
                       {editable && (
                         <button type="button" onClick={() => removeMark(i)} className="text-[10px] uppercase text-destructive font-bold">remove</button>
                       )}
@@ -321,7 +413,10 @@ function SkinPage() {
                       <li key={i} className="flex items-center gap-2 text-xs">
                         <span className="inline-flex w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold items-center justify-center">{i + 1}</span>
                         <span className="font-mono uppercase text-[10px] text-muted-foreground">{m.side}</span>
-                        <span>{m.label || <em className="text-muted-foreground">no label</em>}</span>
+                        <span>
+                          {areaLabel(m.area) && <span className="font-mono uppercase text-[10px] text-primary mr-1">{areaLabel(m.area)}</span>}
+                          {m.label || <em className="text-muted-foreground">no label</em>}
+                        </span>
                       </li>
                     ))}
                   </ul>
