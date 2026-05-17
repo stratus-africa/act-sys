@@ -221,6 +221,7 @@ function SkinPage() {
   };
 
   return (
+    <>
     <div className="space-y-8">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
