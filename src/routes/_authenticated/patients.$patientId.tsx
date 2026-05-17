@@ -46,9 +46,9 @@ function PatientShell() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {p?.dnr_status && <PrecautionBadge tone="alert" label="DNR" />}
-              {atRisk && <PrecautionBadge tone="alert" label={`FALL RISK (${fall?.total_score})`} />}
-              {consent?.status !== "complete" && <PrecautionBadge tone="warn" label="CONSENT PENDING" />}
+              {p?.dnr_status && <PrecautionBadge variant="red" label="DNR" />}
+              {atRisk && <PrecautionBadge variant="red" label={`FALL RISK (${fall?.total_score})`} />}
+              {consent?.status !== "complete" && <PrecautionBadge variant="amber" label="CONSENT PENDING" />}
             </div>
           </div>
         </div>
