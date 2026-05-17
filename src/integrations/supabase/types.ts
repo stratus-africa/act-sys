@@ -478,6 +478,51 @@ export type Database = {
           },
         ]
       }
+      patient_allergies: {
+        Row: {
+          active: boolean
+          allergen: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          onset_date: string | null
+          patient_id: string
+          reaction: string | null
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allergen: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          onset_date?: string | null
+          patient_id: string
+          reaction?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allergen?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          onset_date?: string | null
+          patient_id?: string
+          reaction?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patient_assignments: {
         Row: {
           assigned_at: string
