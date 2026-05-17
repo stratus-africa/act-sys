@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { PrecautionBadge } from "@/components/app/PrecautionBadge";
 import { toast } from "sonner";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Pencil, X, Check } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/allergies")({ component: AllergiesPage });
 
@@ -46,6 +46,8 @@ function AllergiesPage() {
     notes: "",
   });
   const [saving, setSaving] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<Allergy>>({});
 
   const load = async () => {
     setLoading(true);
@@ -91,6 +93,31 @@ function AllergiesPage() {
     const { error } = await supabase.from("patient_allergies").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Removed");
+    load();
+  };
+
+  const startEdit = (a: Allergy) => {
+    setEditId(a.id);
+    setEditDraft({
+      allergen: a.allergen, category: a.category, reaction: a.reaction,
+      severity: a.severity, onset_date: a.onset_date, notes: a.notes,
+    });
+  };
+  const cancelEdit = () => { setEditId(null); setEditDraft({}); };
+  const saveEdit = async () => {
+    if (!editId) return;
+    if (!editDraft.allergen?.toString().trim()) { toast.error("Allergen is required"); return; }
+    const { error } = await supabase.from("patient_allergies").update({
+      allergen: editDraft.allergen,
+      category: editDraft.category || null,
+      reaction: editDraft.reaction || null,
+      severity: editDraft.severity ?? "mild",
+      onset_date: editDraft.onset_date || null,
+      notes: editDraft.notes || null,
+    }).eq("id", editId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved");
+    cancelEdit();
     load();
   };
 
@@ -155,7 +182,7 @@ function AllergiesPage() {
         <div className="px-6 py-3 border-b border-border flex justify-between items-center">
           <h3 className="text-xs font-bold uppercase tracking-widest">Active ({active.length})</h3>
         </div>
-        <AllergyTable rows={active} canEdit={canEdit} onToggle={toggleActive} onRemove={remove} />
+        <AllergyTable rows={active} canEdit={canEdit} onToggle={toggleActive} onRemove={remove} editId={editId} editDraft={editDraft} setEditDraft={setEditDraft} onStartEdit={startEdit} onCancelEdit={cancelEdit} onSaveEdit={saveEdit} />
       </section>
 
       {inactive.length > 0 && (
@@ -163,7 +190,7 @@ function AllergiesPage() {
           <div className="px-6 py-3 border-b border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest">Resolved / Inactive ({inactive.length})</h3>
           </div>
-          <AllergyTable rows={inactive} canEdit={canEdit} onToggle={toggleActive} onRemove={remove} />
+          <AllergyTable rows={inactive} canEdit={canEdit} onToggle={toggleActive} onRemove={remove} editId={editId} editDraft={editDraft} setEditDraft={setEditDraft} onStartEdit={startEdit} onCancelEdit={cancelEdit} onSaveEdit={saveEdit} />
         </section>
       )}
     </div>
@@ -179,7 +206,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function AllergyTable({ rows, canEdit, onToggle, onRemove }: { rows: Allergy[]; canEdit: boolean; onToggle: (a: Allergy) => void; onRemove: (id: string) => void }) {
+function AllergyTable({ rows, canEdit, onToggle, onRemove, editId, editDraft, setEditDraft, onStartEdit, onCancelEdit, onSaveEdit }: {
+  rows: Allergy[]; canEdit: boolean; onToggle: (a: Allergy) => void; onRemove: (id: string) => void;
+  editId: string | null; editDraft: Partial<Allergy>; setEditDraft: (d: Partial<Allergy>) => void;
+  onStartEdit: (a: Allergy) => void; onCancelEdit: () => void; onSaveEdit: () => void;
+}) {
   if (rows.length === 0) return <div className="px-6 py-6 text-sm text-muted-foreground">None.</div>;
   return (
     <table className="w-full text-sm">
@@ -195,7 +226,34 @@ function AllergyTable({ rows, canEdit, onToggle, onRemove }: { rows: Allergy[]; 
         </tr>
       </thead>
       <tbody>
-        {rows.map((a) => (
+        {rows.map((a) => {
+          const isEditing = editId === a.id;
+          if (isEditing) {
+            return (
+              <tr key={a.id} className="border-b border-border last:border-0 bg-muted/30">
+                <td className="px-6 py-2"><input value={editDraft.allergen ?? ""} onChange={(e) => setEditDraft({ ...editDraft, allergen: e.target.value })} className="w-full px-2 py-1 border border-border bg-background text-sm" /></td>
+                <td className="px-3 py-2">
+                  <select value={editDraft.category ?? ""} onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value })} className="w-full px-2 py-1 border border-border bg-background text-sm">
+                    <option value="">—</option>
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </td>
+                <td className="px-3 py-2"><input value={editDraft.reaction ?? ""} onChange={(e) => setEditDraft({ ...editDraft, reaction: e.target.value })} className="w-full px-2 py-1 border border-border bg-background text-sm" /></td>
+                <td className="px-3 py-2">
+                  <select value={editDraft.severity ?? "mild"} onChange={(e) => setEditDraft({ ...editDraft, severity: e.target.value })} className="w-full px-2 py-1 border border-border bg-background text-sm capitalize">
+                    {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </td>
+                <td className="px-3 py-2"><input type="date" value={editDraft.onset_date ?? ""} onChange={(e) => setEditDraft({ ...editDraft, onset_date: e.target.value })} className="w-full px-2 py-1 border border-border bg-background text-sm" /></td>
+                <td className="px-3 py-2"><input value={editDraft.notes ?? ""} onChange={(e) => setEditDraft({ ...editDraft, notes: e.target.value })} className="w-full px-2 py-1 border border-border bg-background text-sm" /></td>
+                <td className="px-6 py-2 text-right space-x-2 whitespace-nowrap">
+                  <button onClick={onSaveEdit} className="inline-flex text-primary hover:text-primary/80" title="Save"><Check className="size-4" /></button>
+                  <button onClick={onCancelEdit} className="inline-flex text-muted-foreground hover:text-foreground" title="Cancel"><X className="size-4" /></button>
+                </td>
+              </tr>
+            );
+          }
+          return (
           <tr key={a.id} className="border-b border-border last:border-0">
             <td className="px-6 py-3 font-bold">{a.allergen}</td>
             <td className="px-3 py-3">{a.category ?? "—"}</td>
@@ -205,6 +263,7 @@ function AllergyTable({ rows, canEdit, onToggle, onRemove }: { rows: Allergy[]; 
             <td className="px-3 py-3 text-muted-foreground">{a.notes ?? "—"}</td>
             {canEdit && (
               <td className="px-6 py-3 text-right space-x-2 whitespace-nowrap">
+                <button onClick={() => onStartEdit(a)} className="inline-flex text-muted-foreground hover:text-foreground" title="Edit"><Pencil className="size-4" /></button>
                 <button onClick={() => onToggle(a)} className="text-xs font-bold uppercase text-muted-foreground hover:text-foreground">
                   {a.active ? "Resolve" : "Reactivate"}
                 </button>
@@ -212,7 +271,8 @@ function AllergyTable({ rows, canEdit, onToggle, onRemove }: { rows: Allergy[]; 
               </td>
             )}
           </tr>
-        ))}
+          );
+        })}
       </tbody>
     </table>
   );
