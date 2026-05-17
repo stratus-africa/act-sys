@@ -12,10 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVisitsRouteImport } from './routes/_authenticated/visits'
+import { Route as AuthenticatedTimesheetsRouteImport } from './routes/_authenticated/timesheets'
+import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/staff'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
+import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
+import { Route as AuthenticatedPatientsPatientIdFallRiskRouteImport } from './routes/_authenticated/patients.$patientId.fall-risk'
 import { Route as AuthenticatedPatientsPatientIdConsentRouteImport } from './routes/_authenticated/patients.$patientId.consent'
+import { Route as AuthenticatedPatientsPatientIdAssessmentRouteImport } from './routes/_authenticated/patients.$patientId.assessment'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -31,6 +39,31 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVisitsRoute = AuthenticatedVisitsRouteImport.update({
+  id: '/visits',
+  path: '/visits',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedTimesheetsRoute = AuthenticatedTimesheetsRouteImport.update({
+  id: '/timesheets',
+  path: '/timesheets',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStaffRoute = AuthenticatedStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -42,33 +75,66 @@ const AuthenticatedPatientsIndexRoute =
     path: '/patients/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedPatientsPatientIdRoute =
+  AuthenticatedPatientsPatientIdRouteImport.update({
+    id: '/patients/$patientId',
+    path: '/patients/$patientId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedPatientsPatientIdIndexRoute =
   AuthenticatedPatientsPatientIdIndexRouteImport.update({
-    id: '/patients/$patientId/',
-    path: '/patients/$patientId/',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
+const AuthenticatedPatientsPatientIdFallRiskRoute =
+  AuthenticatedPatientsPatientIdFallRiskRouteImport.update({
+    id: '/fall-risk',
+    path: '/fall-risk',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
 const AuthenticatedPatientsPatientIdConsentRoute =
   AuthenticatedPatientsPatientIdConsentRouteImport.update({
-    id: '/patients/$patientId/consent',
-    path: '/patients/$patientId/consent',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/consent',
+    path: '/consent',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
+const AuthenticatedPatientsPatientIdAssessmentRoute =
+  AuthenticatedPatientsPatientIdAssessmentRouteImport.update({
+    id: '/assessment',
+    path: '/assessment',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/staff': typeof AuthenticatedStaffRoute
+  '/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/visits': typeof AuthenticatedVisitsRoute
+  '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
   '/patients/$patientId/': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/staff': typeof AuthenticatedStaffRoute
+  '/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/visits': typeof AuthenticatedVisitsRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
+  '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRoutesById {
@@ -77,8 +143,16 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/staff': typeof AuthenticatedStaffRoute
+  '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
+  '/_authenticated/visits': typeof AuthenticatedVisitsRoute
+  '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/_authenticated/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/_authenticated/patients/$patientId/consent': typeof AuthenticatedPatientsPatientIdConsentRoute
+  '/_authenticated/patients/$patientId/fall-risk': typeof AuthenticatedPatientsPatientIdFallRiskRoute
   '/_authenticated/patients/$patientId/': typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -87,16 +161,31 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/reports'
+    | '/settings'
+    | '/staff'
+    | '/timesheets'
+    | '/visits'
+    | '/patients/$patientId'
     | '/patients/'
+    | '/patients/$patientId/assessment'
     | '/patients/$patientId/consent'
+    | '/patients/$patientId/fall-risk'
     | '/patients/$patientId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/dashboard'
+    | '/reports'
+    | '/settings'
+    | '/staff'
+    | '/timesheets'
+    | '/visits'
     | '/patients'
+    | '/patients/$patientId/assessment'
     | '/patients/$patientId/consent'
+    | '/patients/$patientId/fall-risk'
     | '/patients/$patientId'
   id:
     | '__root__'
@@ -104,8 +193,16 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/dashboard'
+    | '/_authenticated/reports'
+    | '/_authenticated/settings'
+    | '/_authenticated/staff'
+    | '/_authenticated/timesheets'
+    | '/_authenticated/visits'
+    | '/_authenticated/patients/$patientId'
     | '/_authenticated/patients/'
+    | '/_authenticated/patients/$patientId/assessment'
     | '/_authenticated/patients/$patientId/consent'
+    | '/_authenticated/patients/$patientId/fall-risk'
     | '/_authenticated/patients/$patientId/'
   fileRoutesById: FileRoutesById
 }
@@ -138,6 +235,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/visits': {
+      id: '/_authenticated/visits'
+      path: '/visits'
+      fullPath: '/visits'
+      preLoaderRoute: typeof AuthenticatedVisitsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/timesheets': {
+      id: '/_authenticated/timesheets'
+      path: '/timesheets'
+      fullPath: '/timesheets'
+      preLoaderRoute: typeof AuthenticatedTimesheetsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/staff': {
+      id: '/_authenticated/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof AuthenticatedStaffRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -152,37 +284,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/patients/$patientId': {
+      id: '/_authenticated/patients/$patientId'
+      path: '/patients/$patientId'
+      fullPath: '/patients/$patientId'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/patients/$patientId/': {
       id: '/_authenticated/patients/$patientId/'
-      path: '/patients/$patientId'
+      path: '/'
       fullPath: '/patients/$patientId/'
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
+    '/_authenticated/patients/$patientId/fall-risk': {
+      id: '/_authenticated/patients/$patientId/fall-risk'
+      path: '/fall-risk'
+      fullPath: '/patients/$patientId/fall-risk'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdFallRiskRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
     '/_authenticated/patients/$patientId/consent': {
       id: '/_authenticated/patients/$patientId/consent'
-      path: '/patients/$patientId/consent'
+      path: '/consent'
       fullPath: '/patients/$patientId/consent'
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdConsentRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
+    '/_authenticated/patients/$patientId/assessment': {
+      id: '/_authenticated/patients/$patientId/assessment'
+      path: '/assessment'
+      fullPath: '/patients/$patientId/assessment'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdAssessmentRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
   }
 }
 
+interface AuthenticatedPatientsPatientIdRouteChildren {
+  AuthenticatedPatientsPatientIdAssessmentRoute: typeof AuthenticatedPatientsPatientIdAssessmentRoute
+  AuthenticatedPatientsPatientIdConsentRoute: typeof AuthenticatedPatientsPatientIdConsentRoute
+  AuthenticatedPatientsPatientIdFallRiskRoute: typeof AuthenticatedPatientsPatientIdFallRiskRoute
+  AuthenticatedPatientsPatientIdIndexRoute: typeof AuthenticatedPatientsPatientIdIndexRoute
+}
+
+const AuthenticatedPatientsPatientIdRouteChildren: AuthenticatedPatientsPatientIdRouteChildren =
+  {
+    AuthenticatedPatientsPatientIdAssessmentRoute:
+      AuthenticatedPatientsPatientIdAssessmentRoute,
+    AuthenticatedPatientsPatientIdConsentRoute:
+      AuthenticatedPatientsPatientIdConsentRoute,
+    AuthenticatedPatientsPatientIdFallRiskRoute:
+      AuthenticatedPatientsPatientIdFallRiskRoute,
+    AuthenticatedPatientsPatientIdIndexRoute:
+      AuthenticatedPatientsPatientIdIndexRoute,
+  }
+
+const AuthenticatedPatientsPatientIdRouteWithChildren =
+  AuthenticatedPatientsPatientIdRoute._addFileChildren(
+    AuthenticatedPatientsPatientIdRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
+  AuthenticatedTimesheetsRoute: typeof AuthenticatedTimesheetsRoute
+  AuthenticatedVisitsRoute: typeof AuthenticatedVisitsRoute
+  AuthenticatedPatientsPatientIdRoute: typeof AuthenticatedPatientsPatientIdRouteWithChildren
   AuthenticatedPatientsIndexRoute: typeof AuthenticatedPatientsIndexRoute
-  AuthenticatedPatientsPatientIdConsentRoute: typeof AuthenticatedPatientsPatientIdConsentRoute
-  AuthenticatedPatientsPatientIdIndexRoute: typeof AuthenticatedPatientsPatientIdIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStaffRoute: AuthenticatedStaffRoute,
+  AuthenticatedTimesheetsRoute: AuthenticatedTimesheetsRoute,
+  AuthenticatedVisitsRoute: AuthenticatedVisitsRoute,
+  AuthenticatedPatientsPatientIdRoute:
+    AuthenticatedPatientsPatientIdRouteWithChildren,
   AuthenticatedPatientsIndexRoute: AuthenticatedPatientsIndexRoute,
-  AuthenticatedPatientsPatientIdConsentRoute:
-    AuthenticatedPatientsPatientIdConsentRoute,
-  AuthenticatedPatientsPatientIdIndexRoute:
-    AuthenticatedPatientsPatientIdIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -197,13 +381,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
