@@ -79,9 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "American Care Team — Home Care Management" },
       { name: "description", content: "Clinical home care management for American Care Team: patients, assessments, care plans, visits, and compliance." },
       { property: "og:title", content: "American Care Team — Home Care Management" },
-      { property: "og:description", content: "Clinical home care management platform." },
+      { property: "og:description", content: "Clinical home care management for American Care Team: patients, assessments, care plans, visits, and compliance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "American Care Team — Home Care Management" },
+      { name: "twitter:description", content: "Clinical home care management for American Care Team: patients, assessments, care plans, visits, and compliance." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/68a129ae-9b12-4f85-8f66-687d020fac4e/id-preview-8f1aaff9--e8e290ac-17a3-4145-9451-3d7b7a7c437a.lovable.app-1779022186145.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/68a129ae-9b12-4f85-8f66-687d020fac4e/id-preview-8f1aaff9--e8e290ac-17a3-4145-9451-3d7b7a7c437a.lovable.app-1779022186145.png" },
     ],
     links: [
       {
