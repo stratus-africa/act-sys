@@ -5,13 +5,25 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope } from "lucide-react";
+import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Check, X, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/$staffId")({ component: StaffProfilePage });
 
 type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; created_at: string };
 const ROLES = ["admin", "rn", "caregiver", "patient"] as const;
 type RoleName = (typeof ROLES)[number];
+
+const PERMISSION_MATRIX: { label: string; roles: RoleName[] }[] = [
+  { label: "Manage staff & invitations", roles: ["admin"] },
+  { label: "Assign patients to staff", roles: ["admin", "rn"] },
+  { label: "View all patient records", roles: ["admin", "rn"] },
+  { label: "Create & edit clinical assessments", roles: ["admin", "rn"] },
+  { label: "Add / edit allergies & care plans", roles: ["admin", "rn"] },
+  { label: "Document visits for assigned patients", roles: ["admin", "rn", "caregiver"] },
+  { label: "Submit timesheets", roles: ["admin", "rn", "caregiver"] },
+  { label: "Approve timesheets", roles: ["admin", "rn"] },
+  { label: "View own patient profile only", roles: ["patient"] },
+];
 
 function StaffProfilePage() {
   const { staffId } = Route.useParams();
