@@ -467,5 +467,42 @@ function SkinPage() {
         </div>
       </FormSection>
     </div>
+    {pending && (
+      <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setPending(null)}>
+        <div className="bg-card border-2 border-border max-w-md w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">New Notation · {pending.side}</div>
+            <h3 className="text-lg font-bold">Link to pressure-sore area</h3>
+          </div>
+          <div>
+            <FieldLabel>Area (optional)</FieldLabel>
+            <select
+              value={pendingArea}
+              onChange={(e) => setPendingArea(e.target.value)}
+              className="w-full px-3 py-2 bg-background border border-border text-sm"
+            >
+              <option value="">— none —</option>
+              {PRESSURE_AREAS.map((a) => (
+                <option key={a.key} value={a.key}>{a.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>Note</FieldLabel>
+            <TextInput
+              autoFocus
+              value={pendingLabel}
+              onChange={(e) => setPendingLabel(e.target.value)}
+              placeholder="e.g. stage 2 ulcer, bruise"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setPending(null)} className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider border border-border">Cancel</button>
+            <button type="button" onClick={confirmMarker} className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider bg-primary text-primary-foreground">Add Notation</button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
