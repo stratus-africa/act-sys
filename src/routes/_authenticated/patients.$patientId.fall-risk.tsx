@@ -36,6 +36,7 @@ function FallRiskPage() {
   const [type, setType] = useState<"initial" | "reassessment" | "post_fall">("initial");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [sig, setSig] = useState<SignatureValue>({ dataUrl: null, typed: "" });
+  const [patientSig, setPatientSig] = useState<SignatureValue>({ dataUrl: null, typed: "" });
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
 
@@ -46,11 +47,16 @@ function FallRiskPage() {
 
   const total = ITEMS.reduce((n, i) => n + (values[i.key] ? 1 : 0), 0);
   const risk = total >= 4 ? "at_risk" : "low";
+  const clinicianSigned = !!(sig.dataUrl || sig.typed.trim());
+  const patientSigned = !!(patientSig.dataUrl || patientSig.typed.trim());
+  const canSubmit = clinicianSigned && patientSigned && !saving;
 
   const submit = async () => {
-    if (!sig.dataUrl && !sig.typed) { toast.error("Clinician signature required"); return; }
+    if (!clinicianSigned) { toast.error("Clinician signature required"); return; }
+    if (!patientSigned) { toast.error("Participant signature required"); return; }
     setSaving(true);
     const sigUrl = await uploadSig(sig, patientId);
+    const patientSigUrl = await uploadSig(patientSig, patientId);
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("fall_risk_assessments").insert({
       patient_id: patientId,
@@ -62,12 +68,15 @@ function FallRiskPage() {
       risk_level: risk,
       clinician_signature_url: sigUrl,
       clinician_signature_typed: sig.typed || null,
+      patient_signature_url: patientSigUrl,
+      patient_signature_typed: patientSig.typed || null,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Fall risk assessment recorded");
     setValues(Object.fromEntries(ITEMS.map((i) => [i.key, false])));
     setSig({ dataUrl: null, typed: "" });
+    setPatientSig({ dataUrl: null, typed: "" });
     loadHistory();
   };
 
@@ -108,11 +117,22 @@ function FallRiskPage() {
           </div>
         </FormSection>
 
-        <FormSection title="Clinician Signature">
-          <SignaturePad value={sig} onChange={setSig} label="RN signature" />
+        <FormSection title="Signatures" description="Both clinician and participant must sign before submission.">
+          <div className="grid md:grid-cols-2 gap-6">
+            <SignaturePad value={sig} onChange={setSig} label="RN signature" />
+            <SignaturePad value={patientSig} onChange={setPatientSig} label="Participant signature" />
+          </div>
         </FormSection>
 
-        <button onClick={submit} disabled={saving} className="bg-primary text-primary-foreground px-6 py-2 text-sm font-bold disabled:opacity-50">{saving ? "Saving…" : "Submit assessment"}</button>
+        <div className="flex items-center gap-4">
+          <button onClick={submit} disabled={!canSubmit} className="bg-primary text-primary-foreground px-6 py-2 text-sm font-bold disabled:opacity-50">{saving ? "Saving…" : "Submit assessment"}</button>
+          {!canSubmit && !saving && (
+            <span className="text-[10px] font-mono uppercase text-muted-foreground">
+              {!clinicianSigned && "Clinician signature required"}
+              {clinicianSigned && !patientSigned && "Participant signature required"}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="border border-border bg-card">
