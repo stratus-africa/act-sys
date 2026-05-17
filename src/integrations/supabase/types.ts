@@ -14,16 +14,612 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          diff: Json | null
+          id: string
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          diff?: Json | null
+          id?: string
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          diff?: Json | null
+          id?: string
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
+      fall_risk_assessments: {
+        Row: {
+          age_65: boolean
+          assessment_date: string
+          assessment_type: string
+          clinician_id: string | null
+          clinician_signature_typed: string | null
+          clinician_signature_url: string | null
+          cognitive_impairment: boolean
+          created_at: string
+          environmental_hazards: boolean
+          id: string
+          incontinence: boolean
+          mobility_impairment: boolean
+          multiple_diagnoses: boolean
+          pain_affecting_function: boolean
+          patient_id: string
+          polypharmacy: boolean
+          prior_falls: boolean
+          risk_level: string
+          total_score: number
+          visual_impairment: boolean
+        }
+        Insert: {
+          age_65?: boolean
+          assessment_date?: string
+          assessment_type: string
+          clinician_id?: string | null
+          clinician_signature_typed?: string | null
+          clinician_signature_url?: string | null
+          cognitive_impairment?: boolean
+          created_at?: string
+          environmental_hazards?: boolean
+          id?: string
+          incontinence?: boolean
+          mobility_impairment?: boolean
+          multiple_diagnoses?: boolean
+          pain_affecting_function?: boolean
+          patient_id: string
+          polypharmacy?: boolean
+          prior_falls?: boolean
+          risk_level?: string
+          total_score?: number
+          visual_impairment?: boolean
+        }
+        Update: {
+          age_65?: boolean
+          assessment_date?: string
+          assessment_type?: string
+          clinician_id?: string | null
+          clinician_signature_typed?: string | null
+          clinician_signature_url?: string | null
+          cognitive_impairment?: boolean
+          created_at?: string
+          environmental_hazards?: boolean
+          id?: string
+          incontinence?: boolean
+          mobility_impairment?: boolean
+          multiple_diagnoses?: boolean
+          pain_affecting_function?: boolean
+          patient_id?: string
+          polypharmacy?: boolean
+          prior_falls?: boolean
+          risk_level?: string
+          total_score?: number
+          visual_impairment?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fall_risk_assessments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hipaa_authorizations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          exclude_communicable: boolean | null
+          exclude_mental_health: boolean | null
+          exclude_other: string | null
+          exclude_substance_abuse: boolean | null
+          expiry_date: string | null
+          expiry_event: string | null
+          extent: string | null
+          id: string
+          patient_id: string
+          patient_signature_typed: string | null
+          patient_signature_url: string | null
+          period_type: string | null
+          printed_name: string | null
+          provider_name: string | null
+          recipient_name: string | null
+          relationship: string | null
+          revoked_at: string | null
+          signed_at: string | null
+          start_date: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          exclude_communicable?: boolean | null
+          exclude_mental_health?: boolean | null
+          exclude_other?: string | null
+          exclude_substance_abuse?: boolean | null
+          expiry_date?: string | null
+          expiry_event?: string | null
+          extent?: string | null
+          id?: string
+          patient_id: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
+          period_type?: string | null
+          printed_name?: string | null
+          provider_name?: string | null
+          recipient_name?: string | null
+          relationship?: string | null
+          revoked_at?: string | null
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          exclude_communicable?: boolean | null
+          exclude_mental_health?: boolean | null
+          exclude_other?: string | null
+          exclude_substance_abuse?: boolean | null
+          expiry_date?: string | null
+          expiry_event?: string | null
+          extent?: string | null
+          id?: string
+          patient_id?: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
+          period_type?: string | null
+          printed_name?: string | null
+          provider_name?: string | null
+          recipient_name?: string | null
+          relationship?: string | null
+          revoked_at?: string | null
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hipaa_authorizations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participant_assessments: {
+        Row: {
+          activities_of_visit: Json | null
+          adl_status: Json | null
+          assessment_date: string
+          cardiovascular: Json | null
+          caregiver_names: string | null
+          change_log: Json | null
+          created_at: string
+          diet: Json | null
+          gastrointestinal: Json | null
+          general_condition: string | null
+          genitourinary: Json | null
+          health_needs: Json | null
+          id: string
+          medication_management: string | null
+          medications: Json | null
+          mental_health: Json | null
+          musculoskeletal: Json | null
+          neurological: Json | null
+          notes: string | null
+          nurse_id: string | null
+          pain: Json | null
+          participant_signature_typed: string | null
+          participant_signature_url: string | null
+          patient_id: string
+          psychosocial: Json | null
+          respiratory: Json | null
+          rn_signature_typed: string | null
+          rn_signature_url: string | null
+          sensory: Json | null
+          signed_at: string | null
+          skin: Json | null
+          status: string
+          updated_at: string
+          visit_type: string
+          vitals: Json | null
+          weight: Json | null
+        }
+        Insert: {
+          activities_of_visit?: Json | null
+          adl_status?: Json | null
+          assessment_date?: string
+          cardiovascular?: Json | null
+          caregiver_names?: string | null
+          change_log?: Json | null
+          created_at?: string
+          diet?: Json | null
+          gastrointestinal?: Json | null
+          general_condition?: string | null
+          genitourinary?: Json | null
+          health_needs?: Json | null
+          id?: string
+          medication_management?: string | null
+          medications?: Json | null
+          mental_health?: Json | null
+          musculoskeletal?: Json | null
+          neurological?: Json | null
+          notes?: string | null
+          nurse_id?: string | null
+          pain?: Json | null
+          participant_signature_typed?: string | null
+          participant_signature_url?: string | null
+          patient_id: string
+          psychosocial?: Json | null
+          respiratory?: Json | null
+          rn_signature_typed?: string | null
+          rn_signature_url?: string | null
+          sensory?: Json | null
+          signed_at?: string | null
+          skin?: Json | null
+          status?: string
+          updated_at?: string
+          visit_type: string
+          vitals?: Json | null
+          weight?: Json | null
+        }
+        Update: {
+          activities_of_visit?: Json | null
+          adl_status?: Json | null
+          assessment_date?: string
+          cardiovascular?: Json | null
+          caregiver_names?: string | null
+          change_log?: Json | null
+          created_at?: string
+          diet?: Json | null
+          gastrointestinal?: Json | null
+          general_condition?: string | null
+          genitourinary?: Json | null
+          health_needs?: Json | null
+          id?: string
+          medication_management?: string | null
+          medications?: Json | null
+          mental_health?: Json | null
+          musculoskeletal?: Json | null
+          neurological?: Json | null
+          notes?: string | null
+          nurse_id?: string | null
+          pain?: Json | null
+          participant_signature_typed?: string | null
+          participant_signature_url?: string | null
+          patient_id?: string
+          psychosocial?: Json | null
+          respiratory?: Json | null
+          rn_signature_typed?: string | null
+          rn_signature_url?: string | null
+          sensory?: Json | null
+          signed_at?: string | null
+          skin?: Json | null
+          status?: string
+          updated_at?: string
+          visit_type?: string
+          vitals?: Json | null
+          weight?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participant_assessments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_assignments: {
+        Row: {
+          assigned_at: string
+          id: string
+          patient_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          staff_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          id?: string
+          patient_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          staff_id: string
+        }
+        Update: {
+          assigned_at?: string
+          id?: string
+          patient_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_assignments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_consents: {
+        Row: {
+          advance_directive: boolean
+          agency_signature_typed: string | null
+          agency_signature_url: string | null
+          consent_emergency: boolean
+          consent_payment: boolean
+          consent_privacy: boolean
+          consent_services: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          patient_id: string
+          patient_signature_typed: string | null
+          patient_signature_url: string | null
+          signed_at: string | null
+          ssn_full: string | null
+          start_of_care: string | null
+          status: string
+        }
+        Insert: {
+          advance_directive?: boolean
+          agency_signature_typed?: string | null
+          agency_signature_url?: string | null
+          consent_emergency?: boolean
+          consent_payment?: boolean
+          consent_privacy?: boolean
+          consent_services?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          patient_id: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
+          signed_at?: string | null
+          ssn_full?: string | null
+          start_of_care?: string | null
+          status?: string
+        }
+        Update: {
+          advance_directive?: boolean
+          agency_signature_typed?: string | null
+          agency_signature_url?: string | null
+          consent_emergency?: boolean
+          consent_payment?: boolean
+          consent_privacy?: boolean
+          consent_services?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          patient_id?: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
+          signed_at?: string | null
+          ssn_full?: string | null
+          start_of_care?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_consents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          dnr_status: boolean
+          dob: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          first_name: string
+          general_condition: string | null
+          id: string
+          insurance: string | null
+          last_name: string
+          mrn: string | null
+          notes: string | null
+          phone: string | null
+          primary_physician: string | null
+          ssn_last4: string | null
+          start_of_care: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          dnr_status?: boolean
+          dob?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          first_name: string
+          general_condition?: string | null
+          id?: string
+          insurance?: string | null
+          last_name: string
+          mrn?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_physician?: string | null
+          ssn_last4?: string | null
+          start_of_care?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          dnr_status?: boolean
+          dob?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          first_name?: string
+          general_condition?: string | null
+          id?: string
+          insurance?: string | null
+          last_name?: string
+          mrn?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_physician?: string | null
+          ssn_last4?: string | null
+          start_of_care?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          license_no: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          license_no?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          license_no?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_user_has_any_role: {
+        Args: { _roles: Database["public"]["Enums"]["app_role"][] }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_assigned_to_patient: {
+        Args: { _patient_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "rn" | "caregiver" | "patient"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +746,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "rn", "caregiver", "patient"],
+    },
   },
 } as const
