@@ -126,6 +126,40 @@ function Documents() {
     return `${(n / 1024 / 1024).toFixed(1)} MB`;
   };
 
+  const filteredDocs = docs.filter((d) => {
+    if (filterCategory !== "all" && d.category !== filterCategory) return false;
+    if (filterSigned === "signed" && !d.signed_at) return false;
+    if (filterSigned === "unsigned" && d.signed_at) return false;
+    if (search.trim() && !d.file_name.toLowerCase().includes(search.toLowerCase().trim())) return false;
+    return true;
+  });
+
+  const signDocument = async () => {
+    if (!signTarget) return;
+    if (!signSig.dataUrl && !signSig.typed.trim()) { toast.error("Signature required"); return; }
+    setSigning(true);
+    let sigPath: string | null = null;
+    if (signSig.dataUrl) {
+      const blob = await (await fetch(signSig.dataUrl)).blob();
+      const path = `${patientId}/signatures/doc-${signTarget.id}-${Date.now()}.png`;
+      const up = await supabase.storage.from("patient-documents").upload(path, blob, { contentType: "image/png" });
+      if (up.error) { setSigning(false); return toast.error(up.error.message); }
+      sigPath = path;
+    }
+    const { error } = await supabase.from("patient_documents").update({
+      signature_url: sigPath,
+      signature_typed: signSig.typed.trim() || null,
+      signed_by: user?.id,
+      signed_at: new Date().toISOString(),
+    }).eq("id", signTarget.id);
+    setSigning(false);
+    if (error) return toast.error(error.message);
+    toast.success("Document signed");
+    setSignTarget(null);
+    setSignSig({ dataUrl: null, typed: "" });
+    load();
+  };
+
   return (
     <div className="space-y-8">
       {canUpload && (
