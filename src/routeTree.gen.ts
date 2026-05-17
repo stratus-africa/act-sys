@@ -20,6 +20,7 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite.'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
+import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff.$staffId'
 import { Route as AuthenticatedPatientsDocumentsRouteImport } from './routes/_authenticated/patients..documents'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
@@ -86,6 +87,12 @@ const AuthenticatedPatientsIndexRoute =
     id: '/patients/',
     path: '/patients/',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStaffStaffIdRoute =
+  AuthenticatedStaffStaffIdRouteImport.update({
+    id: '/$staffId',
+    path: '/$staffId',
+    getParentRoute: () => AuthenticatedStaffRoute,
   } as any)
 const AuthenticatedPatientsDocumentsRoute =
   AuthenticatedPatientsDocumentsRouteImport.update({
@@ -161,11 +168,12 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/staff': typeof AuthenticatedStaffRoute
+  '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
+  '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -184,10 +192,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/staff': typeof AuthenticatedStaffRoute
+  '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
+  '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -208,11 +217,12 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/staff': typeof AuthenticatedStaffRoute
+  '/_authenticated/staff': typeof AuthenticatedStaffRouteWithChildren
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/visits': typeof AuthenticatedVisitsRoute
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/_authenticated/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
+  '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/_authenticated/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/visits'
     | '/patients/$patientId'
     | '/patients/documents'
+    | '/staff/$staffId'
     | '/patients/'
     | '/patients/$patientId/assessment'
     | '/patients/$patientId/care-plan'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/timesheets'
     | '/visits'
     | '/patients/documents'
+    | '/staff/$staffId'
     | '/patients'
     | '/patients/$patientId/assessment'
     | '/patients/$patientId/care-plan'
@@ -284,6 +296,7 @@ export interface FileRouteTypes {
     | '/_authenticated/visits'
     | '/_authenticated/patients/$patientId'
     | '/_authenticated/patients/documents'
+    | '/_authenticated/staff/$staffId'
     | '/_authenticated/patients/'
     | '/_authenticated/patients/$patientId/assessment'
     | '/_authenticated/patients/$patientId/care-plan'
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/staff/$staffId': {
+      id: '/_authenticated/staff/$staffId'
+      path: '/$staffId'
+      fullPath: '/staff/$staffId'
+      preLoaderRoute: typeof AuthenticatedStaffStaffIdRouteImport
+      parentRoute: typeof AuthenticatedStaffRoute
+    }
     '/_authenticated/patients/documents': {
       id: '/_authenticated/patients/documents'
       path: '/patients/documents'
@@ -462,6 +482,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedStaffRouteChildren {
+  AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
+}
+
+const AuthenticatedStaffRouteChildren: AuthenticatedStaffRouteChildren = {
+  AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
+}
+
+const AuthenticatedStaffRouteWithChildren =
+  AuthenticatedStaffRoute._addFileChildren(AuthenticatedStaffRouteChildren)
+
 interface AuthenticatedPatientsPatientIdRouteChildren {
   AuthenticatedPatientsPatientIdAssessmentRoute: typeof AuthenticatedPatientsPatientIdAssessmentRoute
   AuthenticatedPatientsPatientIdCarePlanRoute: typeof AuthenticatedPatientsPatientIdCarePlanRoute
@@ -505,7 +536,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
+  AuthenticatedStaffRoute: typeof AuthenticatedStaffRouteWithChildren
   AuthenticatedTimesheetsRoute: typeof AuthenticatedTimesheetsRoute
   AuthenticatedVisitsRoute: typeof AuthenticatedVisitsRoute
   AuthenticatedPatientsPatientIdRoute: typeof AuthenticatedPatientsPatientIdRouteWithChildren
@@ -517,7 +548,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedStaffRoute: AuthenticatedStaffRoute,
+  AuthenticatedStaffRoute: AuthenticatedStaffRouteWithChildren,
   AuthenticatedTimesheetsRoute: AuthenticatedTimesheetsRoute,
   AuthenticatedVisitsRoute: AuthenticatedVisitsRoute,
   AuthenticatedPatientsPatientIdRoute:
