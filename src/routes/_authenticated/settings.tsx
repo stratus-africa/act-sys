@@ -21,18 +21,21 @@ function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("full_name, email, phone, license_no").eq("id", user.id).single().then(({ data }) => {
+    supabase.from("profiles").select("full_name, email, phone, license_no, notification_prefs").eq("id", user.id).single().then(({ data }) => {
       if (data) setProfile({
         full_name: data.full_name ?? "",
         email: data.email ?? user.email ?? "",
         phone: data.phone ?? "",
         license_no: data.license_no ?? "",
       });
+      const np = (data as any)?.notification_prefs;
+      if (np && typeof np === "object") {
+        setPrefs({
+          email_alerts: np.email_alerts ?? true,
+          in_app_alerts: np.in_app_alerts ?? true,
+        });
+      }
     });
-    try {
-      const raw = localStorage.getItem("notif_prefs");
-      if (raw) setPrefs(JSON.parse(raw));
-    } catch {}
   }, [user]);
 
   const saveProfile = async () => {
@@ -59,9 +62,14 @@ function SettingsPage() {
     toast.success("Password updated");
   };
 
-  const savePrefs = (next: typeof prefs) => {
+  const savePrefs = async (next: typeof prefs) => {
     setPrefs(next);
-    localStorage.setItem("notif_prefs", JSON.stringify(next));
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ notification_prefs: next as any })
+      .eq("id", user.id);
+    if (error) { toast.error(error.message); return; }
     toast.success("Preferences saved");
   };
 
