@@ -24,11 +24,11 @@ type AlertKind = "fall" | "allergy" | "skin" | "consent";
 type AlertItem = { id: string; recordId: string; kind: AlertKind; label: string; patient_id: string; patientName: string; meta?: string };
 
 const KIND_LABEL: Record<AlertKind | "all", string> = { all: "All", fall: "Fall risk", allergy: "Allergy", skin: "Skin", consent: "Consent" };
-const KIND_ROUTE: Record<AlertKind, "/patients/$patientId/fall-risk" | "/patients/$patientId/allergies" | "/patients/$patientId/skin" | "/patients/$patientId/consents"> = {
+const KIND_ROUTE: Record<AlertKind, "/patients/$patientId/fall-risk" | "/patients/$patientId/allergies" | "/patients/$patientId/skin" | "/patients/$patientId/consent"> = {
   fall: "/patients/$patientId/fall-risk",
   allergy: "/patients/$patientId/allergies",
   skin: "/patients/$patientId/skin",
-  consent: "/patients/$patientId/consents",
+  consent: "/patients/$patientId/consent",
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
