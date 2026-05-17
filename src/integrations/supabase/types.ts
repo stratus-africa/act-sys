@@ -80,6 +80,53 @@ export type Database = {
         }
         Relationships: []
       }
+      document_signatures: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          patient_id: string
+          signature_typed: string | null
+          signature_url: string | null
+          signed_at: string
+          signer_id: string | null
+          signer_name: string | null
+          signer_role: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          patient_id: string
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string
+          signer_id?: string | null
+          signer_name?: string | null
+          signer_role: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          patient_id?: string
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string
+          signer_id?: string | null
+          signer_name?: string | null
+          signer_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signatures_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "patient_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fall_risk_assessments: {
         Row: {
           age_65: boolean
@@ -481,8 +528,10 @@ export type Database = {
           file_name: string
           file_path: string
           id: string
+          locked: boolean
           mime_type: string | null
           patient_id: string
+          required_signers: string[]
           signature_typed: string | null
           signature_url: string | null
           signed_at: string | null
@@ -496,8 +545,10 @@ export type Database = {
           file_name: string
           file_path: string
           id?: string
+          locked?: boolean
           mime_type?: string | null
           patient_id: string
+          required_signers?: string[]
           signature_typed?: string | null
           signature_url?: string | null
           signed_at?: string | null
@@ -511,8 +562,10 @@ export type Database = {
           file_name?: string
           file_path?: string
           id?: string
+          locked?: boolean
           mime_type?: string | null
           patient_id?: string
+          required_signers?: string[]
           signature_typed?: string | null
           signature_url?: string | null
           signed_at?: string | null
@@ -700,6 +753,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      timesheets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          hours: number
+          id: string
+          notes: string | null
+          rejection_reason: string | null
+          staff_id: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          hours?: number
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          staff_id: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          hours?: number
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          staff_id?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
