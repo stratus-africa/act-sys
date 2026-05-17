@@ -5,13 +5,13 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { Mail, Trash2, UserPlus } from "lucide-react";
+import { Mail, Trash2, UserPlus, Copy, Check } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff")({ component: StaffPage });
 
 type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean };
 type Role = { id: string; user_id: string; role: "admin" | "rn" | "caregiver" | "patient" };
-type Invite = { id: string; email: string; role: string; created_at: string; accepted_at: string | null; accepted_by: string | null };
+type Invite = { id: string; email: string; role: string; created_at: string; accepted_at: string | null; accepted_by: string | null; token: string | null };
 
 const ROLES: Role["role"][] = ["admin", "rn", "caregiver", "patient"];
 
@@ -25,6 +25,16 @@ function StaffPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role["role"]>("caregiver");
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const inviteUrl = (token: string) => `${typeof window !== "undefined" ? window.location.origin : ""}/accept-invite/${token}`;
+
+  const copyLink = async (token: string) => {
+    await navigator.clipboard.writeText(inviteUrl(token));
+    setCopied(token);
+    toast.success("Invite link copied");
+    setTimeout(() => setCopied(null), 1500);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,7 +131,14 @@ function StaffPage() {
                     <td className="px-4 py-2 capitalize">{i.role}</td>
                     <td className="px-4 py-2">{i.accepted_at ? <span className="text-primary text-xs font-bold">Accepted</span> : <span className="text-amber-600 text-xs font-bold">Pending</span>}</td>
                     <td className="px-4 py-2 font-mono text-[10px]">{new Date(i.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-2 text-right">{!i.accepted_at && <button onClick={() => revokeInvite(i)} className="text-muted-foreground hover:text-alert-red"><Trash2 className="size-4" /></button>}</td>
+                    <td className="px-4 py-2 text-right">
+                      {!i.accepted_at && i.token && (
+                        <button onClick={() => copyLink(i.token!)} className="text-muted-foreground hover:text-primary mr-3" title={inviteUrl(i.token)}>
+                          {copied === i.token ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+                        </button>
+                      )}
+                      {!i.accepted_at && <button onClick={() => revokeInvite(i)} className="text-muted-foreground hover:text-alert-red"><Trash2 className="size-4" /></button>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

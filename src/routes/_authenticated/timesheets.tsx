@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, History } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/timesheets")({ component: Timesheets });
 
@@ -15,6 +15,7 @@ type Timesheet = {
   approved_by: string | null; approved_at: string | null; rejection_reason: string | null; updated_at: string;
 };
 type Profile = { id: string; full_name: string | null; email: string | null };
+type Event = { id: string; timesheet_id: string; actor_id: string | null; action: string; notes: string | null; created_at: string };
 
 function mondayOf(d: Date) {
   const x = new Date(d);
@@ -43,6 +44,8 @@ function Timesheets() {
   const [hours, setHours] = useState("0");
   const [notes, setNotes] = useState("");
   const [autoHours, setAutoHours] = useState<number | null>(null);
+  const [historyFor, setHistoryFor] = useState<Timesheet | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -64,6 +67,17 @@ function Timesheets() {
   }, [user, canApprove]);
 
   useEffect(() => { load(); }, [load]);
+
+  const logEvent = async (timesheet_id: string, action: string, notes?: string) => {
+    if (!user) return;
+    await supabase.from("timesheet_events").insert({ timesheet_id, actor_id: user.id, action, notes: notes ?? null });
+  };
+
+  const openHistory = async (t: Timesheet) => {
+    setHistoryFor(t);
+    const { data } = await supabase.from("timesheet_events").select("*").eq("timesheet_id", t.id).order("created_at", { ascending: false });
+    setEvents((data ?? []) as Event[]);
+  };
 
   // Auto-compute hours from visit check-in/out for the chosen week
   useEffect(() => {
@@ -90,8 +104,9 @@ function Timesheets() {
     const h = parseFloat(hours) || 0;
     const payload: any = { staff_id: user.id, week_start: week, hours: h, notes: notes.trim() || null, status };
     if (status === "submitted") payload.submitted_at = new Date().toISOString();
-    const { error } = await supabase.from("timesheets").upsert(payload, { onConflict: "staff_id,week_start" });
+    const { data: row, error } = await supabase.from("timesheets").upsert(payload, { onConflict: "staff_id,week_start" }).select().single();
     if (error) return toast.error(error.message);
+    if (row) await logEvent(row.id, status === "submitted" ? "submitted" : "saved_draft", `Hours: ${h}`);
     toast.success(status === "submitted" ? "Timesheet submitted" : "Draft saved");
     setHours("0"); setNotes("");
     load();
@@ -100,6 +115,7 @@ function Timesheets() {
   const approve = async (t: Timesheet) => {
     const { error } = await supabase.from("timesheets").update({ status: "approved", approved_by: user?.id, approved_at: new Date().toISOString(), rejection_reason: null }).eq("id", t.id);
     if (error) return toast.error(error.message);
+    await logEvent(t.id, "approved");
     load();
   };
   const reject = async (t: Timesheet) => {
@@ -107,6 +123,7 @@ function Timesheets() {
     if (!reason) return;
     const { error } = await supabase.from("timesheets").update({ status: "rejected", rejection_reason: reason, approved_by: user?.id, approved_at: new Date().toISOString() }).eq("id", t.id);
     if (error) return toast.error(error.message);
+    await logEvent(t.id, "rejected", reason);
     load();
   };
 
@@ -157,7 +174,10 @@ function Timesheets() {
                       {t.rejection_reason && <div className="text-[10px] text-alert-red mt-1 italic">"{t.rejection_reason}"</div>}
                     </td>
                     <td className="px-4 py-2 text-xs text-muted-foreground">{t.notes ?? "—"}</td>
-                    <td className="px-4 py-2 font-mono text-[10px] text-muted-foreground">{new Date(t.updated_at).toLocaleString()}</td>
+                    <td className="px-4 py-2 font-mono text-[10px] text-muted-foreground">
+                      {new Date(t.updated_at).toLocaleString()}
+                      <button onClick={() => openHistory(t)} className="ml-2 text-primary hover:underline inline-flex items-center gap-1"><History className="size-3" />history</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -188,12 +208,40 @@ function Timesheets() {
                             <button onClick={() => reject(t)} className="text-alert-red p-1 hover:bg-alert-red/10" title="Reject"><X className="size-4" /></button>
                           </div>
                         )}
+                        <button onClick={() => openHistory(t)} className="text-muted-foreground hover:text-foreground p-1 mt-1" title="History"><History className="size-4" /></button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
+          </div>
+        )}
+
+        {historyFor && (
+          <div className="fixed inset-0 bg-foreground/40 grid place-items-center z-50 p-4" onClick={() => setHistoryFor(null)}>
+            <div className="bg-card border border-border w-full max-w-lg p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div>
+                <div className="text-[10px] font-mono uppercase text-muted-foreground">Audit history</div>
+                <h3 className="text-sm font-bold">Week of {historyFor.week_start} — {historyFor.hours}h</h3>
+              </div>
+              {events.length === 0 ? (
+                <div className="text-xs text-muted-foreground text-center py-6">No events recorded.</div>
+              ) : (
+                <ul className="divide-y divide-border max-h-96 overflow-auto">
+                  {events.map((e) => (
+                    <li key={e.id} className="py-3 flex items-start gap-3">
+                      <span className={"text-[10px] font-bold uppercase px-2 py-0.5 rounded-full " + (e.action === "approved" ? "bg-green-100 text-green-700" : e.action === "rejected" ? "bg-red-100 text-red-700" : e.action === "submitted" ? "bg-amber-100 text-amber-700" : "bg-muted text-muted-foreground")}>{e.action.replace("_", " ")}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-mono uppercase text-muted-foreground">{new Date(e.created_at).toLocaleString()} · by {e.actor_id?.slice(0, 8) ?? "system"}</div>
+                        {e.notes && <div className="text-xs italic text-foreground/80 mt-1">"{e.notes}"</div>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex justify-end"><button onClick={() => setHistoryFor(null)} className="px-4 py-2 text-xs font-mono uppercase text-muted-foreground hover:text-foreground">Close</button></div>
+            </div>
           </div>
         )}
       </div>
