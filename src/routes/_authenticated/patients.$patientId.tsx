@@ -12,6 +12,7 @@ const TABS = [
   { to: "/patients/$patientId/assessment", label: "Participant Assessment" },
   { to: "/patients/$patientId/care-plan", label: "Care Plan" },
   { to: "/patients/$patientId/visits", label: "Visits" },
+  { to: "/patients/$patientId/skin", label: "Skin" },
   { to: "/patients/$patientId/documents", label: "Documents" },
 ];
 
