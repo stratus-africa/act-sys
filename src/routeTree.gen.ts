@@ -32,6 +32,7 @@ import { Route as AuthenticatedPatientsPatientIdConsentRouteImport } from './rou
 import { Route as AuthenticatedPatientsPatientIdCaregiverAssessmentRouteImport } from './routes/_authenticated/patients.$patientId.caregiver-assessment'
 import { Route as AuthenticatedPatientsPatientIdCarePlanRouteImport } from './routes/_authenticated/patients.$patientId.care-plan'
 import { Route as AuthenticatedPatientsPatientIdAssessmentRouteImport } from './routes/_authenticated/patients.$patientId.assessment'
+import { Route as AuthenticatedPatientsPatientIdAllergiesRouteImport } from './routes/_authenticated/patients.$patientId.allergies'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -160,6 +161,12 @@ const AuthenticatedPatientsPatientIdAssessmentRoute =
     path: '/assessment',
     getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
   } as any)
+const AuthenticatedPatientsPatientIdAllergiesRoute =
+  AuthenticatedPatientsPatientIdAllergiesRouteImport.update({
+    id: '/allergies',
+    path: '/allergies',
+    getParentRoute: () => AuthenticatedPatientsPatientIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/patients/$patientId/allergies': typeof AuthenticatedPatientsPatientIdAllergiesRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
   '/patients/$patientId/caregiver-assessment': typeof AuthenticatedPatientsPatientIdCaregiverAssessmentRoute
@@ -198,6 +206,7 @@ export interface FileRoutesByTo {
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
+  '/patients/$patientId/allergies': typeof AuthenticatedPatientsPatientIdAllergiesRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
   '/patients/$patientId/caregiver-assessment': typeof AuthenticatedPatientsPatientIdCaregiverAssessmentRoute
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
+  '/_authenticated/patients/$patientId/allergies': typeof AuthenticatedPatientsPatientIdAllergiesRoute
   '/_authenticated/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
   '/_authenticated/patients/$patientId/care-plan': typeof AuthenticatedPatientsPatientIdCarePlanRoute
   '/_authenticated/patients/$patientId/caregiver-assessment': typeof AuthenticatedPatientsPatientIdCaregiverAssessmentRoute
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/patients/documents'
     | '/staff/$staffId'
     | '/patients/'
+    | '/patients/$patientId/allergies'
     | '/patients/$patientId/assessment'
     | '/patients/$patientId/care-plan'
     | '/patients/$patientId/caregiver-assessment'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/patients/documents'
     | '/staff/$staffId'
     | '/patients'
+    | '/patients/$patientId/allergies'
     | '/patients/$patientId/assessment'
     | '/patients/$patientId/care-plan'
     | '/patients/$patientId/caregiver-assessment'
@@ -298,6 +310,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patients/documents'
     | '/_authenticated/staff/$staffId'
     | '/_authenticated/patients/'
+    | '/_authenticated/patients/$patientId/allergies'
     | '/_authenticated/patients/$patientId/assessment'
     | '/_authenticated/patients/$patientId/care-plan'
     | '/_authenticated/patients/$patientId/caregiver-assessment'
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdAssessmentRouteImport
       parentRoute: typeof AuthenticatedPatientsPatientIdRoute
     }
+    '/_authenticated/patients/$patientId/allergies': {
+      id: '/_authenticated/patients/$patientId/allergies'
+      path: '/allergies'
+      fullPath: '/patients/$patientId/allergies'
+      preLoaderRoute: typeof AuthenticatedPatientsPatientIdAllergiesRouteImport
+      parentRoute: typeof AuthenticatedPatientsPatientIdRoute
+    }
   }
 }
 
@@ -494,6 +514,7 @@ const AuthenticatedStaffRouteWithChildren =
   AuthenticatedStaffRoute._addFileChildren(AuthenticatedStaffRouteChildren)
 
 interface AuthenticatedPatientsPatientIdRouteChildren {
+  AuthenticatedPatientsPatientIdAllergiesRoute: typeof AuthenticatedPatientsPatientIdAllergiesRoute
   AuthenticatedPatientsPatientIdAssessmentRoute: typeof AuthenticatedPatientsPatientIdAssessmentRoute
   AuthenticatedPatientsPatientIdCarePlanRoute: typeof AuthenticatedPatientsPatientIdCarePlanRoute
   AuthenticatedPatientsPatientIdCaregiverAssessmentRoute: typeof AuthenticatedPatientsPatientIdCaregiverAssessmentRoute
@@ -507,6 +528,8 @@ interface AuthenticatedPatientsPatientIdRouteChildren {
 
 const AuthenticatedPatientsPatientIdRouteChildren: AuthenticatedPatientsPatientIdRouteChildren =
   {
+    AuthenticatedPatientsPatientIdAllergiesRoute:
+      AuthenticatedPatientsPatientIdAllergiesRoute,
     AuthenticatedPatientsPatientIdAssessmentRoute:
       AuthenticatedPatientsPatientIdAssessmentRoute,
     AuthenticatedPatientsPatientIdCarePlanRoute:
