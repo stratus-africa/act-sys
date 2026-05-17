@@ -6,6 +6,7 @@ import { FormSection, CheckboxRow, FieldLabel, TextInput } from "@/components/ap
 import { PrecautionBadge } from "@/components/app/PrecautionBadge";
 import { toast } from "sonner";
 import bodyDiagram from "@/assets/skin-body-diagram.jpg";
+import { useCurrentUser } from "@/lib/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/skin")({ component: SkinPage });
 
@@ -33,6 +34,12 @@ async function uploadSig(sig: SignatureValue, patientId: string): Promise<string
 
 function SkinPage() {
   const { patientId } = Route.useParams();
+  const { hasRole, loading: roleLoading } = useCurrentUser();
+  const isClinician = hasRole("admin") || hasRole("rn");
+  const isCaregiver = hasRole("caregiver");
+  const isPatient = !isClinician && !isCaregiver;
+  const canCreate = isClinician;
+  const canAddNotes = isClinician || isCaregiver;
   const [status, setStatus] = useState<"normal" | "abnormal">("normal");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [areas, setAreas] = useState<Record<string, { affected: boolean; note: string }>>(
@@ -121,12 +128,23 @@ function SkinPage() {
         <div>
           <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Clinical / Integumentary</div>
           <h2 className="text-3xl font-extrabold tracking-tight">Skin Assessment</h2>
+          {!roleLoading && (
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-1">
+              {isClinician ? "Clinician view · create & sign" : isCaregiver ? "Caregiver view · notes only" : "Read-only view"}
+            </div>
+          )}
         </div>
-        <PrecautionBadge variant={status === "abnormal" ? "red" : "amber"} label={status === "abnormal" ? "ABNORMAL" : "NORMAL"} />
+        {history[0] && (
+          <PrecautionBadge
+            variant={history[0].status === "abnormal" ? "red" : "neutral"}
+            label={`LATEST: ${history[0].status.toUpperCase()} · ${history[0].assessment_date}`}
+          />
+        )}
       </div>
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-8">
         <div className="space-y-6">
+          {canCreate ? (<>
           <FormSection title="Assessment Header">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -215,6 +233,16 @@ function SkinPage() {
           >
             {saving ? "Saving…" : "Save Skin Assessment"}
           </button>
+          </>) : (
+            <div className="border border-border p-6 bg-muted/30">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Read-only</div>
+              <div className="text-sm">
+                {isCaregiver
+                  ? "Only RNs and admins can create new skin assessments. You can add dated notes to any existing assessment using the panel on the right."
+                  : "Only clinicians can create skin assessments. Select an assessment on the right to review details."}
+              </div>
+            </div>
+          )}
         </div>
 
         <aside className="space-y-4">
@@ -252,7 +280,7 @@ function SkinPage() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-2">
+              {canAddNotes ? (<div className="space-y-2">
                 <textarea
                   value={newRemark}
                   onChange={(e) => setNewRemark(e.target.value)}
@@ -268,7 +296,9 @@ function SkinPage() {
                 >
                   Add Note
                 </button>
-              </div>
+              </div>) : (
+                <div className="text-[11px] font-mono text-muted-foreground">Read-only · contact your care team to add notes.</div>
+              )}
             </div>
           )}
         </aside>
