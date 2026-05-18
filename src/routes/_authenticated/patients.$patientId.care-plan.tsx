@@ -140,6 +140,17 @@ function CarePlan() {
               <option value="active">Active &amp; on hold</option>
               <option value="all">All</option>
             </select>
+            <button
+              onClick={() => exportCarePlanPdf({
+                patientName: patientMeta?.name ?? "Patient",
+                patientMrn: patientMeta?.mrn,
+                goals, interventions, progress,
+              })}
+              disabled={goals.length === 0}
+              className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest border border-border px-3 py-1.5 hover:bg-muted disabled:opacity-40"
+            >
+              <FileDown className="size-3.5" /> Export PDF
+            </button>
             {canEdit && (
               <button onClick={() => { setEditingGoal(null); setGoalForm(true); }} className="bg-primary text-primary-foreground px-3 py-1.5 text-xs font-bold flex items-center gap-1">
                 <Plus className="size-3.5" /> New Goal
