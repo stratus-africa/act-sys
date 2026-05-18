@@ -28,6 +28,7 @@ import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_au
 import { Route as AuthenticatedAssessmentsSkinRouteImport } from './routes/_authenticated/assessments.skin'
 import { Route as AuthenticatedAssessmentsRnRouteImport } from './routes/_authenticated/assessments.rn'
 import { Route as AuthenticatedAssessmentsParticipantRouteImport } from './routes/_authenticated/assessments.participant'
+import { Route as AuthenticatedAssessmentsCaregiverRouteImport } from './routes/_authenticated/assessments.caregiver'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
 import { Route as AuthenticatedPatientsPatientIdVisitsRouteImport } from './routes/_authenticated/patients.$patientId.visits'
 import { Route as AuthenticatedPatientsPatientIdSkinRouteImport } from './routes/_authenticated/patients.$patientId.skin'
@@ -143,6 +144,12 @@ const AuthenticatedAssessmentsParticipantRoute =
     path: '/participant',
     getParentRoute: () => AuthenticatedAssessmentsRoute,
   } as any)
+const AuthenticatedAssessmentsCaregiverRoute =
+  AuthenticatedAssessmentsCaregiverRouteImport.update({
+    id: '/caregiver',
+    path: '/caregiver',
+    getParentRoute: () => AuthenticatedAssessmentsRoute,
+  } as any)
 const AuthenticatedPatientsPatientIdIndexRoute =
   AuthenticatedPatientsPatientIdIndexRouteImport.update({
     id: '/',
@@ -221,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/assessments/caregiver': typeof AuthenticatedAssessmentsCaregiverRoute
   '/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/assessments/rn': typeof AuthenticatedAssessmentsRnRoute
   '/assessments/skin': typeof AuthenticatedAssessmentsSkinRoute
@@ -251,6 +259,7 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/assessments/caregiver': typeof AuthenticatedAssessmentsCaregiverRoute
   '/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/assessments/rn': typeof AuthenticatedAssessmentsRnRoute
   '/assessments/skin': typeof AuthenticatedAssessmentsSkinRoute
@@ -283,6 +292,7 @@ export interface FileRoutesById {
   '/_authenticated/staff': typeof AuthenticatedStaffRouteWithChildren
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/visits': typeof AuthenticatedVisitsRoute
+  '/_authenticated/assessments/caregiver': typeof AuthenticatedAssessmentsCaregiverRoute
   '/_authenticated/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/_authenticated/assessments/rn': typeof AuthenticatedAssessmentsRnRoute
   '/_authenticated/assessments/skin': typeof AuthenticatedAssessmentsSkinRoute
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/assessments/caregiver'
     | '/assessments/participant'
     | '/assessments/rn'
     | '/assessments/skin'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/assessments/caregiver'
     | '/assessments/participant'
     | '/assessments/rn'
     | '/assessments/skin'
@@ -377,6 +389,7 @@ export interface FileRouteTypes {
     | '/_authenticated/staff'
     | '/_authenticated/timesheets'
     | '/_authenticated/visits'
+    | '/_authenticated/assessments/caregiver'
     | '/_authenticated/assessments/participant'
     | '/_authenticated/assessments/rn'
     | '/_authenticated/assessments/skin'
@@ -540,6 +553,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAssessmentsParticipantRouteImport
       parentRoute: typeof AuthenticatedAssessmentsRoute
     }
+    '/_authenticated/assessments/caregiver': {
+      id: '/_authenticated/assessments/caregiver'
+      path: '/caregiver'
+      fullPath: '/assessments/caregiver'
+      preLoaderRoute: typeof AuthenticatedAssessmentsCaregiverRouteImport
+      parentRoute: typeof AuthenticatedAssessmentsRoute
+    }
     '/_authenticated/patients/$patientId/': {
       id: '/_authenticated/patients/$patientId/'
       path: '/'
@@ -621,6 +641,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAssessmentsRouteChildren {
+  AuthenticatedAssessmentsCaregiverRoute: typeof AuthenticatedAssessmentsCaregiverRoute
   AuthenticatedAssessmentsParticipantRoute: typeof AuthenticatedAssessmentsParticipantRoute
   AuthenticatedAssessmentsRnRoute: typeof AuthenticatedAssessmentsRnRoute
   AuthenticatedAssessmentsSkinRoute: typeof AuthenticatedAssessmentsSkinRoute
@@ -629,6 +650,8 @@ interface AuthenticatedAssessmentsRouteChildren {
 
 const AuthenticatedAssessmentsRouteChildren: AuthenticatedAssessmentsRouteChildren =
   {
+    AuthenticatedAssessmentsCaregiverRoute:
+      AuthenticatedAssessmentsCaregiverRoute,
     AuthenticatedAssessmentsParticipantRoute:
       AuthenticatedAssessmentsParticipantRoute,
     AuthenticatedAssessmentsRnRoute: AuthenticatedAssessmentsRnRoute,
