@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ClipboardList, CalendarDays, FileText, Settings, LogOut, UserCog, ChevronDown, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, CalendarDays, FileText, Settings, LogOut, UserCog, ChevronDown, ChevronRight, SlidersHorizontal, Stethoscope } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/lib/use-current-user";
@@ -7,6 +7,7 @@ import { useCurrentUser, type AppRole } from "@/lib/use-current-user";
 const ALL_NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "rn", "caregiver", "patient"] },
   { to: "/patients", label: "Patient Registry", icon: Users, roles: ["admin", "rn", "caregiver"] },
+  { to: "/assessments", label: "Assessments", icon: Stethoscope, roles: ["admin", "rn", "caregiver"] },
   { to: "/visits", label: "Visits & Scheduling", icon: CalendarDays, roles: ["admin", "rn", "caregiver"] },
   { to: "/timesheets", label: "Timesheets", icon: ClipboardList, roles: ["admin", "rn", "caregiver"] },
   { to: "/reports", label: "Reports", icon: FileText, roles: ["admin", "rn"] },
