@@ -486,6 +486,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          metadata: Json
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       participant_assessments: {
         Row: {
           activities_of_visit: Json | null
@@ -1347,45 +1383,66 @@ export type Database = {
       }
       visits: {
         Row: {
+          caregiver_signature_typed: string | null
+          caregiver_signature_url: string | null
           check_in_at: string | null
           check_out_at: string | null
           created_at: string
+          end_miles: number | null
           id: string
           notes: string | null
           patient_id: string
+          patient_signature_typed: string | null
+          patient_signature_url: string | null
           scheduled_date: string
           scheduled_time: string | null
           staff_id: string | null
+          start_miles: number | null
           status: string
           updated_at: string
+          verified_at: string | null
           visit_type: string
         }
         Insert: {
+          caregiver_signature_typed?: string | null
+          caregiver_signature_url?: string | null
           check_in_at?: string | null
           check_out_at?: string | null
           created_at?: string
+          end_miles?: number | null
           id?: string
           notes?: string | null
           patient_id: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
           scheduled_date: string
           scheduled_time?: string | null
           staff_id?: string | null
+          start_miles?: number | null
           status?: string
           updated_at?: string
+          verified_at?: string | null
           visit_type?: string
         }
         Update: {
+          caregiver_signature_typed?: string | null
+          caregiver_signature_url?: string | null
           check_in_at?: string | null
           check_out_at?: string | null
           created_at?: string
+          end_miles?: number | null
           id?: string
           notes?: string | null
           patient_id?: string
+          patient_signature_typed?: string | null
+          patient_signature_url?: string | null
           scheduled_date?: string
           scheduled_time?: string | null
           staff_id?: string | null
+          start_miles?: number | null
           status?: string
           updated_at?: string
+          verified_at?: string | null
           visit_type?: string
         }
         Relationships: []
