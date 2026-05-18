@@ -6,7 +6,66 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { SignaturePad, type SignatureValue } from "@/components/app/SignaturePad";
 import { toast } from "sonner";
-import { Check, X, History, Plus, FileText } from "lucide-react";
+import { Check, X, History, Plus, FileText, RefreshCw } from "lucide-react";
+
+type VisitRow = {
+  scheduled_date: string;
+  check_in_at: string | null;
+  check_out_at: string | null;
+  start_miles: number | null;
+  end_miles: number | null;
+};
+
+function hhmm(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+async function fetchVisitsForWeek(staffId: string, patientId: string, weekStart: string): Promise<VisitRow[]> {
+  const end = new Date(weekStart + "T00:00:00");
+  end.setDate(end.getDate() + 6);
+  const endStr = end.toISOString().slice(0, 10);
+  const { data } = await supabase
+    .from("visits")
+    .select("scheduled_date,check_in_at,check_out_at,start_miles,end_miles")
+    .eq("staff_id", staffId)
+    .eq("patient_id", patientId)
+    .gte("scheduled_date", weekStart)
+    .lte("scheduled_date", endStr)
+    .order("check_in_at", { ascending: true });
+  return (data ?? []) as VisitRow[];
+}
+
+function applyVisitsToDays(days: DayEntry[], visits: VisitRow[]): DayEntry[] {
+  // Group visits by date — earliest time_in, latest time_out, sum mileage.
+  const byDate = new Map<string, VisitRow[]>();
+  for (const v of visits) {
+    const arr = byDate.get(v.scheduled_date) ?? [];
+    arr.push(v);
+    byDate.set(v.scheduled_date, arr);
+  }
+  return days.map((d) => {
+    const vs = byDate.get(d.date);
+    if (!vs || vs.length === 0) return d;
+    const ins = vs.map((v) => v.check_in_at).filter(Boolean) as string[];
+    const outs = vs.map((v) => v.check_out_at).filter(Boolean) as string[];
+    const tin = ins.length ? hhmm(ins.sort()[0]) : d.time_in;
+    const tout = outs.length ? hhmm(outs.sort().slice(-1)[0]) : d.time_out;
+    let miles = 0;
+    for (const v of vs) {
+      if (v.start_miles != null && v.end_miles != null) miles += Number(v.end_miles) - Number(v.start_miles);
+    }
+    const next: DayEntry = {
+      ...d,
+      time_in: tin,
+      time_out: tout,
+      miles: miles > 0 ? miles.toFixed(1) : d.miles,
+    };
+    next.total_hours = computeHours(next.time_in, next.time_out, next.break_minutes);
+    return next;
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/timesheets")({ component: Timesheets });
 
