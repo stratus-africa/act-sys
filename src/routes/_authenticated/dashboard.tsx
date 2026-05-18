@@ -46,7 +46,23 @@ function Dashboard() {
   const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [filter, setFilter] = useState<AlertKind | "all">("all");
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [states, setStates] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("user_alert_states").select("alert_key, status");
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((r: any) => { map[r.alert_key] = r.status; });
+      setStates(map);
+    })();
+  }, []);
+
+  const setAlertState = async (a: AlertItem, status: "acknowledged" | "dismissed" | "resolved") => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("user_alert_states").upsert({ user_id: user.id, alert_key: a.id, status });
+    setStates((s) => ({ ...s, [a.id]: status }));
+  };
 
   useEffect(() => {
     let active = true;
@@ -143,12 +159,12 @@ function Dashboard() {
       return;
     }
     // fall risk: just dismiss from view (clinical data preserved)
-    setDismissed((s) => new Set(s).add(a.id));
+    await setAlertState(a, "acknowledged");
     toast.success("Acknowledged");
   };
 
   const visibleAlerts = alerts
-    .filter((a) => !dismissed.has(a.id))
+    .filter((a) => states[a.id] !== "dismissed" && states[a.id] !== "resolved" && states[a.id] !== "acknowledged")
     .filter((a) => filter === "all" || a.kind === filter);
   const counts: Record<string, number> = { all: alerts.length };
   alerts.forEach((a) => { counts[a.kind] = (counts[a.kind] ?? 0) + 1; });
