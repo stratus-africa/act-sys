@@ -392,10 +392,13 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
     const table = ASSESSMENT_TABLE[sourceType];
     if (!table) { setSourceOptions([]); return; }
     setLoadingSources(true);
-    supabase.from(table).select("id, assessment_date").eq("patient_id", patientId).order("assessment_date", { ascending: false }).limit(100).then(({ data }) => {
-      setSourceOptions((data ?? []) as Array<{ id: string; assessment_date: string }>);
-      // Clear stale id if it doesn't belong to this patient/type
-      if (sourceId && !(data ?? []).some((r: { id: string }) => r.id === sourceId)) setSourceId("");
+    // Some tables use `assessment_date`, caregiver_assessments uses `service_date`.
+    const dateCol = table === "caregiver_assessments" ? "service_date" : "assessment_date";
+    supabase.from(table).select(`id, ${dateCol}`).eq("patient_id", patientId).order(dateCol, { ascending: false }).limit(100).then(({ data }) => {
+      const rows = ((data as unknown) as Array<Record<string, string>>) ?? [];
+      const opts = rows.map((r) => ({ id: r.id, assessment_date: r[dateCol] }));
+      setSourceOptions(opts);
+      if (sourceId && !opts.some((r) => r.id === sourceId)) setSourceId("");
       setLoadingSources(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
