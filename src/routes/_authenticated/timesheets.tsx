@@ -234,7 +234,7 @@ function Timesheets() {
       staff_id: user?.id ?? "",
       patient_id: null,
       client_name: "",
-      employee_name: "",
+      employee_name: myName,
       week_start: ws,
       hours: 0,
       notes: null,
