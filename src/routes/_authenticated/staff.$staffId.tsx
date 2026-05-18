@@ -129,7 +129,6 @@ function StaffProfilePage() {
   }
 
   const editableRoles: RoleName[] = roles.length > 0 ? roles.filter((r) => r !== "patient" || roles.length === 1) : [];
-  const canManageAssignments = isAdmin && (roles.includes("caregiver") || roles.includes("rn"));
 
   return (
     <>
