@@ -222,6 +222,34 @@ function AllergiesPage() {
           <AllergyTable rows={inactive} canEdit={canEdit} onToggle={toggleActive} onRemove={remove} editId={editId} editDraft={editDraft} setEditDraft={setEditDraft} onStartEdit={startEdit} onCancelEdit={cancelEdit} onSaveEdit={saveEdit} />
         </section>
       )}
+
+      <section className="border border-border bg-card">
+        <div className="px-6 py-3 border-b border-border">
+          <h3 className="text-xs font-bold uppercase tracking-widest">Activity History ({events.length})</h3>
+        </div>
+        {events.length === 0 ? (
+          <div className="px-6 py-4 text-sm text-muted-foreground">No activity yet.</div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {events.map((e) => {
+              const label = (e.after?.allergen || e.before?.allergen || "").toString();
+              return (
+                <li key={e.id} className="px-6 py-3 flex items-center justify-between gap-3 text-sm">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={"text-[10px] font-bold uppercase px-1.5 py-0.5 " + (e.action === "remove" ? "bg-destructive/10 text-destructive" : e.action === "add" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>{e.action}</span>
+                      <span className="font-bold truncate">{label || "—"}</span>
+                    </div>
+                    <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                      {actorNames[e.actor_id] ?? "Unknown"} · {new Date(e.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
