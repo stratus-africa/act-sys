@@ -202,18 +202,21 @@ function Timesheets() {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [mineRes, patientsRes, allRes, profilesRes] = await Promise.all([
+    const [mineRes, patientsRes, allRes, profilesRes, myProfileRes] = await Promise.all([
       supabase.from("timesheets").select("*").eq("staff_id", user.id).order("week_start", { ascending: false }),
       supabase.from("patients").select("id,first_name,last_name").eq("status", "active").order("last_name"),
       canApprove
         ? supabase.from("timesheets").select("*").in("status", ["submitted", "approved", "rejected"]).order("week_start", { ascending: false }).limit(200)
         : Promise.resolve({ data: [] } as any),
       canApprove ? supabase.from("profiles").select("id,full_name,email") : Promise.resolve({ data: [] } as any),
+      supabase.from("profiles").select("full_name,email").eq("id", user.id).maybeSingle(),
     ]);
     setMine((mineRes.data ?? []) as unknown as Timesheet[]);
     setPatients((patientsRes.data ?? []) as Patient[]);
     setAllTs(((allRes as any).data ?? []) as Timesheet[]);
     setProfiles(((profilesRes as any).data ?? []) as Profile[]);
+    const mp: any = (myProfileRes as any).data;
+    setMyName(mp?.full_name ?? mp?.email ?? user.email ?? "");
     setLoading(false);
   }, [user, canApprove]);
 
