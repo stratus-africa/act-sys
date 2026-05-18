@@ -25,7 +25,7 @@ export async function notifyAdminsAndRns(payload: {
       title: payload.title,
       body: payload.body ?? null,
       link: payload.link ?? null,
-      metadata: payload.metadata ?? {},
+      metadata: (payload.metadata ?? {}) as never,
     })),
   );
 }
