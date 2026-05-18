@@ -239,11 +239,11 @@ function Timesheets() {
 
   return (
     <>
-      <PageHeader eyebrow="Operations" title="Provider Timesheet" description="Weekly per-patient timesheet — hours, care tasks, availability, signatures.">
+      <PageHeader eyebrow="Operations" title="Provider Timesheet" description="Weekly per-patient timesheet — hours, care tasks, availability, signatures." actions={
         <button onClick={openNew} className="bg-primary text-primary-foreground px-4 py-2 text-sm font-bold inline-flex items-center gap-2">
           <Plus className="size-4" /> New Timesheet
         </button>
-      </PageHeader>
+      } />
 
       <div className="p-8 space-y-8">
         <div className="border border-border bg-card">
