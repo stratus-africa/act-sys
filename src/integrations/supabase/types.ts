@@ -486,6 +486,48 @@ export type Database = {
           },
         ]
       }
+      medication_administrations: {
+        Row: {
+          administered_at: string
+          administered_by: string | null
+          created_at: string
+          dose_given: string | null
+          id: string
+          is_prn: boolean
+          medication_id: string
+          patient_id: string
+          prn_reason: string | null
+          response_note: string | null
+          status: string
+        }
+        Insert: {
+          administered_at?: string
+          administered_by?: string | null
+          created_at?: string
+          dose_given?: string | null
+          id?: string
+          is_prn?: boolean
+          medication_id: string
+          patient_id: string
+          prn_reason?: string | null
+          response_note?: string | null
+          status?: string
+        }
+        Update: {
+          administered_at?: string
+          administered_by?: string | null
+          created_at?: string
+          dose_given?: string | null
+          id?: string
+          is_prn?: boolean
+          medication_id?: string
+          patient_id?: string
+          prn_reason?: string | null
+          response_note?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -825,10 +867,53 @@ export type Database = {
           },
         ]
       }
+      patient_document_versions: {
+        Row: {
+          change_note: string | null
+          created_at: string
+          document_id: string
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          patient_id: string
+          size_bytes: number | null
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: {
+          change_note?: string | null
+          created_at?: string
+          document_id: string
+          file_name: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          patient_id: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+          version: number
+        }
+        Update: {
+          change_note?: string | null
+          created_at?: string
+          document_id?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          patient_id?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       patient_documents: {
         Row: {
           category: string | null
           created_at: string
+          current_version: number
           file_name: string
           file_path: string
           id: string
@@ -846,6 +931,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          current_version?: number
           file_name: string
           file_path: string
           id?: string
@@ -863,6 +949,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          current_version?: number
           file_name?: string
           file_path?: string
           id?: string
@@ -876,6 +963,63 @@ export type Database = {
           signed_by?: string | null
           size_bytes?: number | null
           uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      patient_medications: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          dose: string | null
+          end_date: string | null
+          frequency: string | null
+          id: string
+          instructions: string | null
+          name: string
+          patient_id: string
+          prescriber: string | null
+          prn: boolean
+          prn_indication: string | null
+          route: string | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          dose?: string | null
+          end_date?: string | null
+          frequency?: string | null
+          id?: string
+          instructions?: string | null
+          name: string
+          patient_id: string
+          prescriber?: string | null
+          prn?: boolean
+          prn_indication?: string | null
+          route?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          dose?: string | null
+          end_date?: string | null
+          frequency?: string | null
+          id?: string
+          instructions?: string | null
+          name?: string
+          patient_id?: string
+          prescriber?: string | null
+          prn?: boolean
+          prn_indication?: string | null
+          route?: string | null
+          start_date?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
