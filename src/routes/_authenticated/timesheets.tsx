@@ -193,6 +193,7 @@ function Timesheets() {
   const [allTs, setAllTs] = useState<Timesheet[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [myName, setMyName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<Timesheet | null>(null);
   const [historyFor, setHistoryFor] = useState<Timesheet | null>(null);
