@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { Check, Trash2, Plus, History, Target, ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
+import { Check, Trash2, Plus, History, Target, ChevronDown, ChevronRight, TrendingUp, FileDown } from "lucide-react";
+import { exportCarePlanPdf } from "@/lib/care-plan-pdf";
+import { notifyAdminsAndRns } from "@/lib/notify";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/care-plan")({ component: CarePlan });
 
@@ -17,12 +19,21 @@ type Goal = {
   target_date: string | null;
   status: string;
   source_assessment_type: string | null;
+  source_assessment_id: string | null;
   created_at: string;
 };
 type Intervention = { id: string; goal_id: string; description: string; frequency: string | null; assigned_role: string | null; active: boolean };
 type Progress = { id: string; goal_id: string; note: string; status: string; recorded_by: string | null; recorded_at: string };
 type Task = { id: string; title: string; category: string | null; frequency: string | null; active: boolean; created_at: string };
 type Completion = { id: string; task_id: string; completed_at: string; notes: string | null; completed_by: string | null };
+
+const ASSESSMENT_TABLE: Record<string, "fall_risk_assessments" | "skin_assessments" | "participant_assessments" | "rn_assessments" | "caregiver_assessments"> = {
+  fall_risk: "fall_risk_assessments",
+  skin: "skin_assessments",
+  participant: "participant_assessments",
+  rn: "rn_assessments",
+  caregiver: "caregiver_assessments",
+};
 
 const GOAL_STATUS = ["active", "met", "on_hold", "discontinued"] as const;
 const PROGRESS_STATUS = ["progressing", "met", "no_change", "regressing"] as const;
@@ -62,20 +73,24 @@ function CarePlan() {
   const [progressTarget, setProgressTarget] = useState<Goal | null>(null);
   const [interventionTarget, setInterventionTarget] = useState<Goal | null>(null);
 
+  const [patientMeta, setPatientMeta] = useState<{ name: string; mrn: string | null } | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const [g, i, pr, t, c] = await Promise.all([
+    const [g, i, pr, t, c, p] = await Promise.all([
       supabase.from("care_plan_goals").select("*").eq("patient_id", patientId).order("created_at", { ascending: false }),
       supabase.from("care_plan_interventions").select("*").eq("patient_id", patientId).order("created_at", { ascending: true }),
       supabase.from("care_plan_progress").select("*").eq("patient_id", patientId).order("recorded_at", { ascending: false }),
       supabase.from("care_plan_tasks").select("*").eq("patient_id", patientId).order("created_at", { ascending: true }),
       supabase.from("task_completions").select("*").eq("patient_id", patientId).order("completed_at", { ascending: false }).limit(200),
+      supabase.from("patients").select("first_name,last_name,mrn").eq("id", patientId).maybeSingle(),
     ]);
     setGoals((g.data ?? []) as Goal[]);
     setInterventions((i.data ?? []) as Intervention[]);
     setProgress((pr.data ?? []) as Progress[]);
     setTasks((t.data ?? []) as Task[]);
     setCompletions((c.data ?? []) as Completion[]);
+    setPatientMeta(p.data ? { name: `${p.data.last_name}, ${p.data.first_name}`, mrn: p.data.mrn ?? null } : null);
     setLoading(false);
   }, [patientId]);
 
@@ -134,6 +149,17 @@ function CarePlan() {
               <option value="active">Active &amp; on hold</option>
               <option value="all">All</option>
             </select>
+            <button
+              onClick={() => exportCarePlanPdf({
+                patientName: patientMeta?.name ?? "Patient",
+                patientMrn: patientMeta?.mrn,
+                goals, interventions, progress,
+              })}
+              disabled={goals.length === 0}
+              className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest border border-border px-3 py-1.5 hover:bg-muted disabled:opacity-40"
+            >
+              <FileDown className="size-3.5" /> Export PDF
+            </button>
             {canEdit && (
               <button onClick={() => { setEditingGoal(null); setGoalForm(true); }} className="bg-primary text-primary-foreground px-3 py-1.5 text-xs font-bold flex items-center gap-1">
                 <Plus className="size-3.5" /> New Goal
@@ -356,11 +382,40 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
   const [targetDate, setTargetDate] = useState(existing?.target_date ?? "");
   const [status, setStatus] = useState(existing?.status ?? "active");
   const [sourceType, setSourceType] = useState(existing?.source_assessment_type ?? "");
+  const [sourceId, setSourceId] = useState(existing?.source_assessment_id ?? "");
+  const [sourceOptions, setSourceOptions] = useState<Array<{ id: string; assessment_date: string }>>([]);
+  const [loadingSources, setLoadingSources] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!sourceType) { setSourceOptions([]); return; }
+    const table = ASSESSMENT_TABLE[sourceType];
+    if (!table) { setSourceOptions([]); return; }
+    setLoadingSources(true);
+    // Some tables use `assessment_date`, caregiver_assessments uses `service_date`.
+    const dateCol = table === "caregiver_assessments" ? "service_date" : "assessment_date";
+    supabase.from(table).select(`id, ${dateCol}`).eq("patient_id", patientId).order(dateCol, { ascending: false }).limit(100).then(({ data }) => {
+      const rows = ((data as unknown) as Array<Record<string, string>>) ?? [];
+      const opts = rows.map((r) => ({ id: r.id, assessment_date: r[dateCol] }));
+      setSourceOptions(opts);
+      if (sourceId && !opts.some((r) => r.id === sourceId)) setSourceId("");
+      setLoadingSources(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceType, patientId]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    // Enforce: if a source assessment id is selected, verify it belongs to THIS patient.
+    if (sourceType && sourceId) {
+      const table = ASSESSMENT_TABLE[sourceType];
+      const { data: check } = await supabase.from(table).select("id").eq("id", sourceId).eq("patient_id", patientId).maybeSingle();
+      if (!check) {
+        toast.error("Selected assessment does not belong to this patient.");
+        return;
+      }
+    }
     setSaving(true);
     const payload = {
       patient_id: patientId,
@@ -371,6 +426,7 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
       target_date: targetDate || null,
       status,
       source_assessment_type: sourceType || null,
+      source_assessment_id: sourceType && sourceId ? sourceId : null,
       created_by: userId,
     };
     const { error } = existing
@@ -406,16 +462,24 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div><FieldLabel>Target date</FieldLabel><TextInput type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></div>
           <div><FieldLabel>Source assessment</FieldLabel>
-            <select value={sourceType} onChange={(e) => setSourceType(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm">
+            <select value={sourceType} onChange={(e) => { setSourceType(e.target.value); setSourceId(""); }} className="w-full px-3 py-2 border border-border bg-background text-sm">
               <option value="">—</option>
               <option value="fall_risk">Fall Risk</option>
               <option value="skin">Skin</option>
               <option value="participant">Participant</option>
               <option value="rn">RN</option>
               <option value="caregiver">Caregiver</option>
+            </select>
+          </div>
+          <div><FieldLabel>Linked record</FieldLabel>
+            <select value={sourceId} onChange={(e) => setSourceId(e.target.value)} disabled={!sourceType || loadingSources} className="w-full px-3 py-2 border border-border bg-background text-sm disabled:opacity-50">
+              <option value="">{!sourceType ? "Pick a type first" : loadingSources ? "Loading…" : sourceOptions.length ? "—" : "No records found"}</option>
+              {sourceOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.assessment_date} · {o.id.slice(0, 8)}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -485,6 +549,16 @@ function ProgressModal({ goal, patientId, userId, onClose, onSaved }: { goal: Go
     });
     if (!error && status === "met") {
       await supabase.from("care_plan_goals").update({ status: "met" }).eq("id", goal.id);
+      // Notify admins + RNs so they can review.
+      const { data: actor } = await supabase.from("profiles").select("full_name,email").eq("id", userId ?? "").maybeSingle();
+      const actorName = actor?.full_name || actor?.email || "A clinician";
+      void notifyAdminsAndRns({
+        kind: "care_plan_goal_met",
+        title: `Goal met: ${goal.title}`,
+        body: `${actorName} marked this goal as met. Review the progress note when convenient.`,
+        link: `/patients/${patientId}/care-plan`,
+        metadata: { goal_id: goal.id, patient_id: patientId },
+      });
     }
     setSaving(false);
     if (error) return toast.error(error.message);
