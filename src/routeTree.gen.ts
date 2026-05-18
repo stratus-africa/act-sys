@@ -25,6 +25,7 @@ import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff.$staffId'
 import { Route as AuthenticatedPatientsDocumentsRouteImport } from './routes/_authenticated/patients..documents'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
+import { Route as AuthenticatedAssessmentsParticipantRouteImport } from './routes/_authenticated/assessments.participant'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
 import { Route as AuthenticatedPatientsPatientIdVisitsRouteImport } from './routes/_authenticated/patients.$patientId.visits'
 import { Route as AuthenticatedPatientsPatientIdSkinRouteImport } from './routes/_authenticated/patients.$patientId.skin'
@@ -122,6 +123,12 @@ const AuthenticatedPatientsPatientIdRoute =
     path: '/patients/$patientId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAssessmentsParticipantRoute =
+  AuthenticatedAssessmentsParticipantRouteImport.update({
+    id: '/participant',
+    path: '/participant',
+    getParentRoute: () => AuthenticatedAssessmentsRoute,
+  } as any)
 const AuthenticatedPatientsPatientIdIndexRoute =
   AuthenticatedPatientsPatientIdIndexRouteImport.update({
     id: '/',
@@ -200,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
@@ -227,6 +235,7 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
@@ -256,6 +265,7 @@ export interface FileRoutesById {
   '/_authenticated/staff': typeof AuthenticatedStaffRouteWithChildren
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/visits': typeof AuthenticatedVisitsRoute
+  '/_authenticated/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/_authenticated/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/assessments/participant'
     | '/patients/$patientId'
     | '/patients/documents'
     | '/staff/$staffId'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/assessments/participant'
     | '/patients/documents'
     | '/staff/$staffId'
     | '/assessments'
@@ -341,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authenticated/staff'
     | '/_authenticated/timesheets'
     | '/_authenticated/visits'
+    | '/_authenticated/assessments/participant'
     | '/_authenticated/patients/$patientId'
     | '/_authenticated/patients/documents'
     | '/_authenticated/staff/$staffId'
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientsPatientIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/assessments/participant': {
+      id: '/_authenticated/assessments/participant'
+      path: '/participant'
+      fullPath: '/assessments/participant'
+      preLoaderRoute: typeof AuthenticatedAssessmentsParticipantRouteImport
+      parentRoute: typeof AuthenticatedAssessmentsRoute
+    }
     '/_authenticated/patients/$patientId/': {
       id: '/_authenticated/patients/$patientId/'
       path: '/'
@@ -561,11 +581,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAssessmentsRouteChildren {
+  AuthenticatedAssessmentsParticipantRoute: typeof AuthenticatedAssessmentsParticipantRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
 }
 
 const AuthenticatedAssessmentsRouteChildren: AuthenticatedAssessmentsRouteChildren =
   {
+    AuthenticatedAssessmentsParticipantRoute:
+      AuthenticatedAssessmentsParticipantRoute,
     AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   }
 
@@ -670,3 +693,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
