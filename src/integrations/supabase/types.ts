@@ -44,6 +44,139 @@ export type Database = {
         }
         Relationships: []
       }
+      care_plan_goals: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          patient_id: string
+          priority: string
+          source_assessment_id: string | null
+          source_assessment_type: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          patient_id: string
+          priority?: string
+          source_assessment_id?: string | null
+          source_assessment_type?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          patient_id?: string
+          priority?: string
+          source_assessment_id?: string | null
+          source_assessment_type?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      care_plan_interventions: {
+        Row: {
+          active: boolean
+          assigned_role: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          frequency: string | null
+          goal_id: string
+          id: string
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          frequency?: string | null
+          goal_id: string
+          id?: string
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          assigned_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          frequency?: string | null
+          goal_id?: string
+          id?: string
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_plan_interventions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "care_plan_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_plan_progress: {
+        Row: {
+          goal_id: string
+          id: string
+          note: string
+          patient_id: string
+          recorded_at: string
+          recorded_by: string | null
+          status: string
+        }
+        Insert: {
+          goal_id: string
+          id?: string
+          note: string
+          patient_id: string
+          recorded_at?: string
+          recorded_by?: string | null
+          status?: string
+        }
+        Update: {
+          goal_id?: string
+          id?: string
+          note?: string
+          patient_id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_plan_progress_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "care_plan_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_plan_tasks: {
         Row: {
           active: boolean
