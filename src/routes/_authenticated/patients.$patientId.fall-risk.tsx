@@ -81,7 +81,7 @@ function FallRiskPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="grid lg:grid-cols-[2fr_1fr] gap-6 items-start">
       <div className="border border-border bg-card p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold tracking-tight">Fall Risk Assessment</h2>
@@ -135,7 +135,7 @@ function FallRiskPage() {
         </div>
       </div>
 
-      <div className="border border-border bg-card">
+      <div className="border border-border bg-card lg:sticky lg:top-32">
         <h3 className="text-xs font-bold uppercase tracking-widest p-4 border-b border-border">History</h3>
         {history.length === 0 ? (
           <div className="p-6 text-xs text-muted-foreground text-center">No assessments recorded yet.</div>
