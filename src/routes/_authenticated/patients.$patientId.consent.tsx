@@ -20,6 +20,7 @@ function ConsentPage() {
   const { patientId } = Route.useParams();
   const [existing, setExisting] = useState<any>(null);
   const [hipaa, setHipaa] = useState<any>(null);
+  const [tab, setTab] = useState<"consent" | "hipaa">("consent");
 
   const [c, setC] = useState({ services: false, emergency: false, payment: false, privacy: false, advance: false, ssn: "", startDate: "" });
   const [patientSig, setPatientSig] = useState<SignatureValue>({ dataUrl: null, typed: "" });
@@ -67,7 +68,12 @@ function ConsentPage() {
   };
 
   return (
-    <div className="space-y-12 animate-entrance">
+    <div className="space-y-6 animate-entrance">
+      <div className="flex gap-1 border-b border-border">
+        <button onClick={() => setTab("consent")} className={"px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 " + (tab === "consent" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}>Consent</button>
+        <button onClick={() => setTab("hipaa")} className={"px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 " + (tab === "hipaa" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}>HIPAA Authorization</button>
+      </div>
+      {tab === "consent" && (
       <section className="border border-border bg-card p-8 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-extrabold tracking-tight">Consent for Services</h2>
@@ -96,7 +102,8 @@ function ConsentPage() {
         </div>
         <button onClick={submitConsent} className="bg-primary text-primary-foreground px-6 py-2.5 text-sm font-bold">Submit Consent</button>
       </section>
-
+      )}
+      {tab === "hipaa" && (
       <section className="border border-border bg-card p-8 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-extrabold tracking-tight">HIPAA Authorization</h2>
@@ -144,6 +151,7 @@ function ConsentPage() {
         </FormSection>
         <button onClick={submitHipaa} className="bg-primary text-primary-foreground px-6 py-2.5 text-sm font-bold">Submit HIPAA Authorization</button>
       </section>
+      )}
     </div>
   );
 }
