@@ -131,13 +131,6 @@ export function AppSidebar() {
           </div>
           <NotificationsBell />
         </div>
-            {primaryRole && (
-              <div className="text-[9px] font-mono text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded mt-1 inline-block">
-                {ROLE_LABEL[primaryRole]}
-              </div>
-            )}
-          </div>
-        </div>
         <button onClick={handleSignOut} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-sm">
           <LogOut className="size-3.5" />
           Sign out
