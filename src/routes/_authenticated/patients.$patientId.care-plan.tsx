@@ -382,11 +382,37 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
   const [targetDate, setTargetDate] = useState(existing?.target_date ?? "");
   const [status, setStatus] = useState(existing?.status ?? "active");
   const [sourceType, setSourceType] = useState(existing?.source_assessment_type ?? "");
+  const [sourceId, setSourceId] = useState(existing?.source_assessment_id ?? "");
+  const [sourceOptions, setSourceOptions] = useState<Array<{ id: string; assessment_date: string }>>([]);
+  const [loadingSources, setLoadingSources] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!sourceType) { setSourceOptions([]); return; }
+    const table = ASSESSMENT_TABLE[sourceType];
+    if (!table) { setSourceOptions([]); return; }
+    setLoadingSources(true);
+    supabase.from(table).select("id, assessment_date").eq("patient_id", patientId).order("assessment_date", { ascending: false }).limit(100).then(({ data }) => {
+      setSourceOptions((data ?? []) as Array<{ id: string; assessment_date: string }>);
+      // Clear stale id if it doesn't belong to this patient/type
+      if (sourceId && !(data ?? []).some((r: { id: string }) => r.id === sourceId)) setSourceId("");
+      setLoadingSources(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourceType, patientId]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    // Enforce: if a source assessment id is selected, verify it belongs to THIS patient.
+    if (sourceType && sourceId) {
+      const table = ASSESSMENT_TABLE[sourceType];
+      const { data: check } = await supabase.from(table).select("id").eq("id", sourceId).eq("patient_id", patientId).maybeSingle();
+      if (!check) {
+        toast.error("Selected assessment does not belong to this patient.");
+        return;
+      }
+    }
     setSaving(true);
     const payload = {
       patient_id: patientId,
@@ -397,6 +423,7 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
       target_date: targetDate || null,
       status,
       source_assessment_type: sourceType || null,
+      source_assessment_id: sourceType && sourceId ? sourceId : null,
       created_by: userId,
     };
     const { error } = existing
@@ -432,16 +459,24 @@ function GoalFormModal({ patientId, existing, userId, onClose, onSaved }: { pati
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div><FieldLabel>Target date</FieldLabel><TextInput type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></div>
           <div><FieldLabel>Source assessment</FieldLabel>
-            <select value={sourceType} onChange={(e) => setSourceType(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm">
+            <select value={sourceType} onChange={(e) => { setSourceType(e.target.value); setSourceId(""); }} className="w-full px-3 py-2 border border-border bg-background text-sm">
               <option value="">—</option>
               <option value="fall_risk">Fall Risk</option>
               <option value="skin">Skin</option>
               <option value="participant">Participant</option>
               <option value="rn">RN</option>
               <option value="caregiver">Caregiver</option>
+            </select>
+          </div>
+          <div><FieldLabel>Linked record</FieldLabel>
+            <select value={sourceId} onChange={(e) => setSourceId(e.target.value)} disabled={!sourceType || loadingSources} className="w-full px-3 py-2 border border-border bg-background text-sm disabled:opacity-50">
+              <option value="">{!sourceType ? "Pick a type first" : loadingSources ? "Loading…" : sourceOptions.length ? "—" : "No records found"}</option>
+              {sourceOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.assessment_date} · {o.id.slice(0, 8)}</option>
+              ))}
             </select>
           </div>
         </div>
