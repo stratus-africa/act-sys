@@ -1418,42 +1418,81 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          availability: Json
+          client_name: string | null
+          client_signature_typed: string | null
+          client_signature_url: string | null
+          client_signed_at: string | null
+          comments: string | null
           created_at: string
+          days: Json
+          employee_name: string | null
+          employee_signature_typed: string | null
+          employee_signature_url: string | null
+          employee_signed_at: string | null
           hours: number
           id: string
           notes: string | null
+          patient_id: string | null
           rejection_reason: string | null
           staff_id: string
           status: string
           submitted_at: string | null
+          tasks: Json
           updated_at: string
           week_start: string
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          availability?: Json
+          client_name?: string | null
+          client_signature_typed?: string | null
+          client_signature_url?: string | null
+          client_signed_at?: string | null
+          comments?: string | null
           created_at?: string
+          days?: Json
+          employee_name?: string | null
+          employee_signature_typed?: string | null
+          employee_signature_url?: string | null
+          employee_signed_at?: string | null
           hours?: number
           id?: string
           notes?: string | null
+          patient_id?: string | null
           rejection_reason?: string | null
           staff_id: string
           status?: string
           submitted_at?: string | null
+          tasks?: Json
           updated_at?: string
           week_start: string
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          availability?: Json
+          client_name?: string | null
+          client_signature_typed?: string | null
+          client_signature_url?: string | null
+          client_signed_at?: string | null
+          comments?: string | null
           created_at?: string
+          days?: Json
+          employee_name?: string | null
+          employee_signature_typed?: string | null
+          employee_signature_url?: string | null
+          employee_signed_at?: string | null
           hours?: number
           id?: string
           notes?: string | null
+          patient_id?: string | null
           rejection_reason?: string | null
           staff_id?: string
           status?: string
           submitted_at?: string | null
+          tasks?: Json
           updated_at?: string
           week_start?: string
         }
