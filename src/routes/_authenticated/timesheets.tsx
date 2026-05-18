@@ -150,7 +150,7 @@ function Timesheets() {
         : Promise.resolve({ data: [] } as any),
       canApprove ? supabase.from("profiles").select("id,full_name,email") : Promise.resolve({ data: [] } as any),
     ]);
-    setMine((mineRes.data ?? []) as Timesheet[]);
+    setMine((mineRes.data ?? []) as unknown as Timesheet[]);
     setPatients((patientsRes.data ?? []) as Patient[]);
     setAllTs(((allRes as any).data ?? []) as Timesheet[]);
     setProfiles(((profilesRes as any).data ?? []) as Profile[]);
