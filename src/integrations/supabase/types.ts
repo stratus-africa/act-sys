@@ -523,6 +523,39 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_allergy_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          allergy_id: string | null
+          before: Json | null
+          created_at: string
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          allergy_id?: string | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          allergy_id?: string | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          patient_id?: string
+        }
+        Relationships: []
+      }
       patient_assignments: {
         Row: {
           assigned_at: string
@@ -691,10 +724,16 @@ export type Database = {
           general_condition: string | null
           id: string
           insurance: string | null
+          insurance_carrier: string | null
+          insurance_group: string | null
+          insurance_plan_type: string | null
+          insurance_policy: string | null
+          insurance_subscriber: string | null
           last_name: string
           mrn: string | null
           notes: string | null
           phone: string | null
+          photo_url: string | null
           primary_physician: string | null
           ssn_last4: string | null
           start_of_care: string | null
@@ -717,10 +756,16 @@ export type Database = {
           general_condition?: string | null
           id?: string
           insurance?: string | null
+          insurance_carrier?: string | null
+          insurance_group?: string | null
+          insurance_plan_type?: string | null
+          insurance_policy?: string | null
+          insurance_subscriber?: string | null
           last_name: string
           mrn?: string | null
           notes?: string | null
           phone?: string | null
+          photo_url?: string | null
           primary_physician?: string | null
           ssn_last4?: string | null
           start_of_care?: string | null
@@ -743,10 +788,16 @@ export type Database = {
           general_condition?: string | null
           id?: string
           insurance?: string | null
+          insurance_carrier?: string | null
+          insurance_group?: string | null
+          insurance_plan_type?: string | null
+          insurance_policy?: string | null
+          insurance_subscriber?: string | null
           last_name?: string
           mrn?: string | null
           notes?: string | null
           phone?: string | null
+          photo_url?: string | null
           primary_physician?: string | null
           ssn_last4?: string | null
           start_of_care?: string | null
@@ -845,6 +896,27 @@ export type Database = {
           signed_at?: string | null
           tasks?: Json
           updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          permissions: Json
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          permissions?: Json
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          permissions?: Json
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1071,6 +1143,27 @@ export type Database = {
           submitted_at?: string | null
           updated_at?: string
           week_start?: string
+        }
+        Relationships: []
+      }
+      user_alert_states: {
+        Row: {
+          alert_key: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_key: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_key?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
