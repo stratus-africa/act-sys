@@ -25,7 +25,7 @@ function AssessmentsLayout() {
           );
         })}
       </div>
-      <div className="p-8 max-w-7xl">
+      <div className="p-6 lg:p-8">
         <Outlet />
       </div>
     </>

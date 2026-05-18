@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/assessments")({ component: PatientAssessments });
 
@@ -11,7 +13,9 @@ const META: Record<Kind, { table: string; date: string; route: string; label: st
   skin:        { table: "skin_assessments",        date: "assessment_date", route: "/patients/$patientId/skin", label: "Skin" },
   caregiver:   { table: "caregiver_assessments",   date: "service_date",    route: "/patients/$patientId/caregiver-assessment", label: "Caregiver" },
 };
-const KINDS: Kind[] = ["participant", "rn", "skin", "caregiver"];
+const HISTORY_KINDS: Kind[] = ["participant", "rn", "skin", "caregiver"];
+// Quick-create options exclude Caregiver per request
+const NEW_KINDS: Kind[] = ["participant", "rn", "skin"];
 
 function PatientAssessments() {
   const { patientId } = Route.useParams();
@@ -24,7 +28,7 @@ function PatientAssessments() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const results = await Promise.all(KINDS.map(async (k) => {
+      const results = await Promise.all(HISTORY_KINDS.map(async (k) => {
         const m = META[k];
         const { data } = await supabase.from(m.table as any).select(`id, ${m.date}, status, risk_level`).eq("patient_id", patientId).order(m.date, { ascending: false });
         return (data ?? []).map((r: any) => ({ id: r.id, kind: k, date: r[m.date], status: r.status ?? r.risk_level ?? "—" }));
@@ -48,7 +52,7 @@ function PatientAssessments() {
           <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1">Type</label>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="px-3 py-2 border border-border bg-background text-sm">
             <option value="all">All types</option>
-            {KINDS.map((k) => <option key={k} value={k}>{META[k].label}</option>)}
+            {HISTORY_KINDS.map((k) => <option key={k} value={k}>{META[k].label}</option>)}
           </select>
         </div>
         <div>
@@ -60,17 +64,23 @@ function PatientAssessments() {
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="px-3 py-2 border border-border bg-background text-sm" />
         </div>
         <button onClick={() => { setTypeFilter("all"); setFrom(""); setTo(""); }} className="px-3 py-2 text-xs font-bold uppercase border border-border hover:bg-muted">Clear</button>
-        <div className="ml-auto text-[10px] font-mono uppercase text-muted-foreground">{filtered.length} of {rows.length}</div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {KINDS.map((k) => (
-          <Link key={k} to={META[k].route as any} params={{ patientId } as any} className="border border-border bg-card p-4 hover:border-primary transition-colors">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{META[k].label}</div>
-            <div className="text-2xl font-extrabold mt-1">+ New</div>
-            <div className="text-[10px] text-muted-foreground mt-1">Open form</div>
-          </Link>
-        ))}
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-[10px] font-mono uppercase text-muted-foreground">{filtered.length} of {rows.length}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="size-3.5" /> New Assessment <ChevronDown className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-52">
+              {NEW_KINDS.map((k) => (
+                <DropdownMenuItem key={k} asChild>
+                  <Link to={META[k].route as any} params={{ patientId } as any} className="cursor-pointer">
+                    <span className="text-xs font-bold uppercase tracking-wider">{META[k].label} Assessment</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="border border-border bg-card">
