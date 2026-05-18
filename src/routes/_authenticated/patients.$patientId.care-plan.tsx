@@ -19,12 +19,21 @@ type Goal = {
   target_date: string | null;
   status: string;
   source_assessment_type: string | null;
+  source_assessment_id: string | null;
   created_at: string;
 };
 type Intervention = { id: string; goal_id: string; description: string; frequency: string | null; assigned_role: string | null; active: boolean };
 type Progress = { id: string; goal_id: string; note: string; status: string; recorded_by: string | null; recorded_at: string };
 type Task = { id: string; title: string; category: string | null; frequency: string | null; active: boolean; created_at: string };
 type Completion = { id: string; task_id: string; completed_at: string; notes: string | null; completed_by: string | null };
+
+const ASSESSMENT_TABLE: Record<string, "fall_risk_assessments" | "skin_assessments" | "participant_assessments" | "rn_assessments" | "caregiver_assessments"> = {
+  fall_risk: "fall_risk_assessments",
+  skin: "skin_assessments",
+  participant: "participant_assessments",
+  rn: "rn_assessments",
+  caregiver: "caregiver_assessments",
+};
 
 const GOAL_STATUS = ["active", "met", "on_hold", "discontinued"] as const;
 const PROGRESS_STATUS = ["progressing", "met", "no_change", "regressing"] as const;
