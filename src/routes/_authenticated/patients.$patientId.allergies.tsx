@@ -37,6 +37,8 @@ function AllergiesPage() {
   const canEdit = hasRole("admin") || hasRole("rn");
   const [rows, setRows] = useState<Allergy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<any[]>([]);
+  const [actorNames, setActorNames] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState({
     allergen: "",
     category: "Drug",
@@ -59,14 +61,33 @@ function AllergiesPage() {
       .order("created_at", { ascending: false });
     setRows((data as Allergy[]) ?? []);
     setLoading(false);
+    const { data: ev } = await supabase
+      .from("patient_allergy_events")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setEvents(ev ?? []);
+    const ids = Array.from(new Set((ev ?? []).map((e: any) => e.actor_id).filter(Boolean)));
+    if (ids.length) {
+      const { data: pf } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      setActorNames(Object.fromEntries((pf ?? []).map((p: any) => [p.id, p.full_name || p.email || "Unknown"])));
+    }
   };
 
   useEffect(() => { load(); }, [patientId]);
 
+  const logEvent = async (action: string, allergy_id: string | null, before: any, after: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("patient_allergy_events").insert({
+      allergy_id, patient_id: patientId, action, actor_id: user?.id ?? null, before, after,
+    });
+  };
+
   const add = async () => {
     if (!draft.allergen.trim()) { toast.error("Allergen is required"); return; }
     setSaving(true);
-    const { error } = await supabase.from("patient_allergies").insert({
+    const payload = {
       patient_id: patientId,
       allergen: draft.allergen.trim(),
       category: draft.category || null,
@@ -74,9 +95,11 @@ function AllergiesPage() {
       severity: draft.severity,
       onset_date: draft.onset_date || null,
       notes: draft.notes || null,
-    });
+    };
+    const { data: inserted, error } = await supabase.from("patient_allergies").insert(payload).select().single();
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    await logEvent("add", inserted?.id ?? null, null, payload);
     setDraft({ allergen: "", category: "Drug", reaction: "", severity: "mild", onset_date: "", notes: "" });
     toast.success("Allergy added");
     load();
@@ -85,13 +108,16 @@ function AllergiesPage() {
   const toggleActive = async (a: Allergy) => {
     const { error } = await supabase.from("patient_allergies").update({ active: !a.active }).eq("id", a.id);
     if (error) { toast.error(error.message); return; }
+    await logEvent(a.active ? "resolve" : "reactivate", a.id, { active: a.active }, { active: !a.active });
     load();
   };
 
   const remove = async (id: string) => {
     if (!confirm("Remove this allergy?")) return;
+    const removed = rows.find((r) => r.id === id);
     const { error } = await supabase.from("patient_allergies").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
+    await logEvent("remove", id, removed ?? null, null);
     toast.success("Removed");
     load();
   };
@@ -107,15 +133,18 @@ function AllergiesPage() {
   const saveEdit = async () => {
     if (!editId) return;
     if (!editDraft.allergen?.toString().trim()) { toast.error("Allergen is required"); return; }
-    const { error } = await supabase.from("patient_allergies").update({
+    const before = rows.find((r) => r.id === editId);
+    const update = {
       allergen: editDraft.allergen,
       category: editDraft.category || null,
       reaction: editDraft.reaction || null,
       severity: editDraft.severity ?? "mild",
       onset_date: editDraft.onset_date || null,
       notes: editDraft.notes || null,
-    }).eq("id", editId);
+    };
+    const { error } = await supabase.from("patient_allergies").update(update).eq("id", editId);
     if (error) { toast.error(error.message); return; }
+    await logEvent("edit", editId, before ?? null, update);
     toast.success("Saved");
     cancelEdit();
     load();
