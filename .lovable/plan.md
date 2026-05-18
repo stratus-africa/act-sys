@@ -1,105 +1,65 @@
-## American Care Team — Phase 1 Build Plan
+# Plan: Major restructure + feature additions
 
-Scope is intentionally limited to Phase 1 from your spec. Caregiver Assessment, Home Safety, Skin, Care Plan builder, Visit workflow, and Timesheets will follow in later phases (routes will exist as "coming soon" placeholders so the nav is complete).
+This bundles 10 distinct changes. Confirming the plan before I touch files since several change navigation and routing.
 
-### Design system
+## 1. HIPAA → Tabbed (Consent + Authorization)
+Refactor `patients.$patientId.consent.tsx` into a tabbed page: **Consent** and **HIPAA Authorization**. Keep the existing consent form on tab 1; move/build the HIPAA authorization form (already-backed `hipaa_authorizations` table) on tab 2.
 
-Apply the "Clinical Ledger" direction verbatim to `src/styles.css`:
-- Fonts: Inter (UI) + JetBrains Mono (IDs, scores, dates, vitals)
-- Tokens: `--primary` teal `#0d9488`, `--alert-red` `#be123c`, `--alert-amber` `#b45309`, `--foreground` `#0f172a`, `--muted` `#64748b`, `--border` `#e2e8f0`, `--background` `#fcfcfc`
-- Sharp corners, monospace data, hairline borders, sticky patient header with always-visible precaution badges
-- `entrance` keyframe for section reveals
+## 2. Patient Overview enhancements
+On `patients.$patientId.index.tsx`:
+- Add **Insurance Details** section (carrier, policy #, group #, plan type, subscriber). New columns on `patients` (or a separate `patient_insurance` table — I'll use new columns: `insurance_carrier`, `insurance_policy`, `insurance_group`, `insurance_plan_type`, `insurance_subscriber`).
+- Add **Patient Photo** upload/edit. New column `photo_url`. Reuse existing `patient-documents` bucket under `photos/{patientId}.jpg` path, or new public `patient-photos` bucket.
+- Layout: form on the left, **saved patient details card** on the right (photo + summary).
 
-### Backend (Lovable Cloud)
+## 3. Staff role permissions — editable + persisted
+New table `role_permissions(role app_role PK, permissions jsonb)`. RLS: admin can write, all authenticated can read. On `staff.$staffId.tsx`, replace the static PERMISSION_MATRIX read with DB-backed read, and add an admin-only edit UI (checkbox per permission key) that saves to Supabase.
 
-Enable Lovable Cloud, then create one migration with:
+## 4. Dashboard alert acknowledge/resolve/dismiss per user
+New table `user_alert_states(user_id, alert_key text, status text, updated_at)` with RLS `user_id = auth.uid()`. Update `dashboard.tsx` to read/write status per alert (acknowledge / resolve / dismiss) — replacing the current in-memory `resolveAlert` ephemeral logic for dismissal & ack state.
 
-**Roles & access**
-- `app_role` enum: `admin | rn | caregiver | patient`
-- `user_roles (id, user_id, role)` + `has_role(uuid, app_role)` security-definer fn
-- `profiles (id=auth.users.id, full_name, email, phone, license_no, active)` auto-created via `on_auth_user_created` trigger
-- `staff_invitations (id, email, role, invited_by, accepted_at, token)` — admin invites; user signs up via emailed link, trigger assigns role on first sign-in
+## 5. Allergy activity history
+New table `patient_allergy_events(allergy_id, patient_id, action, actor_id, before jsonb, after jsonb, created_at)`. Insert rows from the client on add/edit/toggle/remove. Show a "History" section on the allergies page with actor name + timestamp.
 
-**Patients & assignments**
-- `patients` (full demographics, SSN encrypted-at-rest column, SOC date, DNR, general condition, insurance, primary physician, status)
-- `patient_assignments (patient_id, staff_id, role)` — links RN + caregiver(s)
+## 6. Staff profile — patient assignment controls
+On `staff.$staffId.tsx` (caregiver/RN only): list current `patient_assignments`, add an "Assign patient" combobox of unassigned patients, and "Remove" button per row. Uses existing `patient_assignments` table + RLS (admin/RN ALL).
 
-**Intake**
-- `patient_consents` and `hipaa_authorizations` (schemas exactly as spec)
+## 7. New top-level **Assessments** module
+- New layout route `src/routes/_authenticated/assessments.tsx` with sub-nav: **Participant Assessment**, **RN Assessment**, **Skin Tracking**, **Caregiver Assessment**.
+- Sub-routes: `assessments.participant.tsx`, `assessments.rn.tsx`, `assessments.skin.tsx`, `assessments.caregiver.tsx`. Each shows a cross-patient list with patient filter + date filter, and links into the existing per-patient assessment page to create/edit.
+- Add "Assessments" item to `AppSidebar.tsx`.
 
-**Clinical**
-- `participant_assessments` (header + JSONB blobs per body system, vitals, signatures)
-- `participant_adl_status`, `patient_medications`, `participant_health_needs`
-- `fall_risk_assessments` (10 scored bools + computed `total_score`, `risk_level`, signature)
+## 8. Patient card cleanup
+On `patients.$patientId.tsx`:
+- Remove individual tabs: Assessment, Caregiver Assessment, RN Assessment, Skin.
+- Add a single **Assessments** tab that lists this patient's assessments across all four types with type/date/status filters; each row links to the existing per-patient route to view/edit.
+- Keep existing route files (still reachable by direct URL and from the new Assessments module).
 
-**Storage**
-- `signatures` bucket (private) for drawn-signature PNGs
+## 9. Fall risk layout
+On `patients.$patientId.fall-risk.tsx`: switch to two-column grid (`lg:grid-cols-[2fr_1fr]`) — form left, history right.
 
-**RLS** (server-fn middleware is primary gate; RLS is the backstop)
-- Admins: full access via `has_role(auth.uid(),'admin')`
-- RNs: read all patients/assessments; write assessments/consents
-- Caregivers: only patients in `patient_assignments` where `staff_id = auth.uid()`
-- Patients: only own row (matched by `profiles.id = patient.user_id`)
-- All write paths go through `createServerFn` + `requireSupabaseAuth`; immutable audit log via Postgres trigger writing to `audit_logs`
+## 10. Migration & types
+One migration covering: new patient columns, `role_permissions`, `user_alert_states`, `patient_allergy_events`, optional `patient-photos` storage bucket + policies. Seed `role_permissions` with current PERMISSION_MATRIX defaults.
 
-### Frontend (TanStack Start)
-
-**Routes**
-```
-src/routes/
-  __root.tsx                    sidebar shell + auth listener + invalidate-on-auth-change
-  index.tsx                     redirects to /dashboard or /login
-  login.tsx                     email/password + invitation token flow
-  _authenticated.tsx            beforeLoad guard (redirect → /login)
-  _authenticated/
-    dashboard.tsx               role-specific cards
-    patients.index.tsx          patient registry table
-    patients.$patientId.tsx     profile shell with sticky header + tabs (Outlet)
-    patients.$patientId.index.tsx               Overview tab
-    patients.$patientId.consent.tsx             Consent + HIPAA tab
-    patients.$patientId.assessments.index.tsx   list of assessments
-    patients.$patientId.assessments.new.tsx     3-page participant assessment wizard
-    patients.$patientId.fall-risk.index.tsx     fall risk history + new
-    patients.$patientId.fall-risk.new.tsx       fall risk form
-    patients.$patientId.care-plan.tsx           placeholder (Phase 2)
-    patients.$patientId.skin.tsx                placeholder
-    patients.$patientId.visits.tsx              placeholder
-    patients.$patientId.timesheets.tsx          placeholder
-    staff.tsx                   admin-only invitations list
-    settings.tsx
-```
-
-**Shared components**
-- `AppSidebar` — fixed left, role chip, nav items per role
-- `PatientHeader` — sticky, name + ID, precaution badges (auto-derived from latest fall risk + skin), tab strip
-- `PrecautionBadge` — color-coded chip system
-- `SignaturePad` — `react-signature-canvas` drawn signature with "Type instead" fallback; uploads PNG to `signatures` bucket and stores URL + typed name
-- `FormSection`, `RadioCardGroup`, `CheckboxCard`, `VitalsInput`, `ScaleField` — reusable form primitives matching the ledger style
-- `AssessmentWizard` — 3-page stepper with auto-save draft (localStorage + server fn every 10s)
-
-**Server functions** (`src/lib/*.functions.ts`)
-- `auth.functions.ts` — `acceptInvitation`
-- `patients.functions.ts` — `listPatients`, `getPatient`, `createPatient`
-- `consent.functions.ts` — `submitConsent`, `submitHipaa`, `getConsentStatus`
-- `fall-risk.functions.ts` — `submitFallRisk` (computes score server-side, sets risk_level)
-- `assessments.functions.ts` — `saveDraft`, `submitAssessment`, `listAssessments`
-- `staff.functions.ts` — `inviteStaff`, `listStaff` (admin-only)
-
-All protected by `requireSupabaseAuth`; admin-only ones additionally check `has_role`. Ensure `attachSupabaseAuth` is registered in `src/start.ts`.
-
-### Business rules wired in this phase
-- Care plan activation blocked until consent status = complete (UI-side until Phase 2 builds the plan)
-- Fall risk score ≥ 4 → `Fall Precautions` badge auto-appears on patient header (derived from latest assessment)
-- Assessment forms auto-save as draft on change
-- Confirm dialog before final submit; submitted records are read-only
-- Audit log trigger captures every insert/update
-
-### Out of scope (Phase 2+)
-Caregiver assessment, Home safety, Skin module, Care plan builder, Visit workflow, Timesheets, Reports. Their routes render a styled "Coming in Phase 2" panel so navigation stays consistent.
+---
 
 ### Technical notes
-- Enable Lovable Cloud first (single migration follows)
-- Signatures bucket is private; signed URLs returned via server fn
-- SSN field masked in UI (`***-**-1234`), stored encrypted using pgcrypto
-- All forms use Zod for validation client- and server-side
-- E-signature: drawn (canvas) primary, typed-name fallback toggle — both stored
+- All new tables get RLS. `role_permissions` readable by all authenticated; writable by admin. `user_alert_states` scoped to `auth.uid()`. `patient_allergy_events` follows the same admin/rn/caregiver/patient pattern as `patient_allergies`.
+- I'll keep existing per-patient assessment routes (so the per-patient Assessments tab and the global module both deep-link into them).
+- No business-logic changes to the actual assessment forms — this is reorganization + new shells.
+
+### Files (new)
+- `supabase/migrations/<ts>_assessments_perms_alerts.sql`
+- `src/routes/_authenticated/assessments.tsx` (+ 4 children)
+- `src/routes/_authenticated/patients.$patientId.hipaa.tsx` *(or extend consent.tsx with tabs in-place — I'll do in-place)*
+
+### Files (edited)
+- `src/routes/_authenticated/patients.$patientId.consent.tsx`
+- `src/routes/_authenticated/patients.$patientId.index.tsx`
+- `src/routes/_authenticated/patients.$patientId.tsx` (tab cleanup)
+- `src/routes/_authenticated/patients.$patientId.fall-risk.tsx`
+- `src/routes/_authenticated/patients.$patientId.allergies.tsx`
+- `src/routes/_authenticated/staff.$staffId.tsx`
+- `src/routes/_authenticated/dashboard.tsx`
+- `src/components/app/AppSidebar.tsx`
+
+Approve and I'll ship it in one pass (migration first, then code).
