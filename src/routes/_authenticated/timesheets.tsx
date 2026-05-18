@@ -615,7 +615,14 @@ function TimesheetEditor({
           </FormSection>
 
           {/* Weekly hours grid */}
-          <FormSection title="Daily Hours" description="Enter time in/out per day; total hours auto-calculates from time and break.">
+          <FormSection title="Daily Hours" description="Times and mileage auto-fill from your check-in/check-out on Visits. Edit any cell to override manually.">
+            {!readOnly && (
+              <div className="flex justify-end -mt-2">
+                <button type="button" onClick={() => syncFromVisits(false)} className="inline-flex items-center gap-2 text-[10px] font-mono uppercase text-primary hover:underline">
+                  <RefreshCw className="size-3" /> Sync from Visits
+                </button>
+              </div>
+            )}
             <div className="overflow-x-auto border border-border">
               <table className="w-full text-xs">
                 <thead className="bg-muted text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
