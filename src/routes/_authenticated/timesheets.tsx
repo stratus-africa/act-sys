@@ -498,6 +498,24 @@ function TimesheetEditor({
     return path;
   };
 
+  const syncFromVisits = useCallback(async (silent = false) => {
+    if (!form.staff_id || !form.patient_id) {
+      if (!silent) toast.error("Select a client first");
+      return;
+    }
+    const visits = await fetchVisitsForWeek(form.staff_id, form.patient_id, form.week_start);
+    setForm((f) => ({ ...f, days: applyVisitsToDays(f.days, visits) }));
+    if (!silent) toast.success(visits.length ? `Pulled ${visits.length} visit${visits.length === 1 ? "" : "s"}` : "No visits found for this week");
+  }, [form.staff_id, form.patient_id, form.week_start]);
+
+  // Auto-pull when patient/week changes on an editable draft
+  useEffect(() => {
+    if (!form.patient_id || form.id) return; // only auto-sync brand-new drafts
+    if (form.status !== "draft") return;
+    void syncFromVisits(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.patient_id, form.week_start]);
+
   const save = async (status: "draft" | "submitted") => {
     if (!form.patient_id) return toast.error("Please select a client (patient) for this timesheet");
     setSaving(true);
