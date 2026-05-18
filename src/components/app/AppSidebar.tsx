@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, ClipboardList, CalendarDays, FileText, Settings
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/lib/use-current-user";
+import { NotificationsBell } from "@/components/app/NotificationsBell";
 
 const ALL_NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "rn", "caregiver", "patient"] },
@@ -116,12 +117,20 @@ export function AppSidebar() {
       </div>
 
       <div className="p-4 border-t border-border bg-muted/30">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-3">
           <div className="size-9 rounded-full bg-primary/10 grid place-items-center text-primary font-bold text-xs">
             {(user?.email ?? "?").slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-bold truncate">{user?.email ?? "Loading…"}</div>
+            {primaryRole && (
+              <div className="text-[9px] font-mono text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded mt-1 inline-block">
+                {ROLE_LABEL[primaryRole]}
+              </div>
+            )}
+          </div>
+          <NotificationsBell />
+        </div>
             {primaryRole && (
               <div className="text-[9px] font-mono text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded mt-1 inline-block">
                 {ROLE_LABEL[primaryRole]}
