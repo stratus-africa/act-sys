@@ -6,7 +6,66 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { SignaturePad, type SignatureValue } from "@/components/app/SignaturePad";
 import { toast } from "sonner";
-import { Check, X, History, Plus, FileText } from "lucide-react";
+import { Check, X, History, Plus, FileText, RefreshCw } from "lucide-react";
+
+type VisitRow = {
+  scheduled_date: string;
+  check_in_at: string | null;
+  check_out_at: string | null;
+  start_miles: number | null;
+  end_miles: number | null;
+};
+
+function hhmm(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+async function fetchVisitsForWeek(staffId: string, patientId: string, weekStart: string): Promise<VisitRow[]> {
+  const end = new Date(weekStart + "T00:00:00");
+  end.setDate(end.getDate() + 6);
+  const endStr = end.toISOString().slice(0, 10);
+  const { data } = await supabase
+    .from("visits")
+    .select("scheduled_date,check_in_at,check_out_at,start_miles,end_miles")
+    .eq("staff_id", staffId)
+    .eq("patient_id", patientId)
+    .gte("scheduled_date", weekStart)
+    .lte("scheduled_date", endStr)
+    .order("check_in_at", { ascending: true });
+  return (data ?? []) as VisitRow[];
+}
+
+function applyVisitsToDays(days: DayEntry[], visits: VisitRow[]): DayEntry[] {
+  // Group visits by date — earliest time_in, latest time_out, sum mileage.
+  const byDate = new Map<string, VisitRow[]>();
+  for (const v of visits) {
+    const arr = byDate.get(v.scheduled_date) ?? [];
+    arr.push(v);
+    byDate.set(v.scheduled_date, arr);
+  }
+  return days.map((d) => {
+    const vs = byDate.get(d.date);
+    if (!vs || vs.length === 0) return d;
+    const ins = vs.map((v) => v.check_in_at).filter(Boolean) as string[];
+    const outs = vs.map((v) => v.check_out_at).filter(Boolean) as string[];
+    const tin = ins.length ? hhmm(ins.sort()[0]) : d.time_in;
+    const tout = outs.length ? hhmm(outs.sort().slice(-1)[0]) : d.time_out;
+    let miles = 0;
+    for (const v of vs) {
+      if (v.start_miles != null && v.end_miles != null) miles += Number(v.end_miles) - Number(v.start_miles);
+    }
+    const next: DayEntry = {
+      ...d,
+      time_in: tin,
+      time_out: tout,
+      miles: miles > 0 ? miles.toFixed(1) : d.miles,
+    };
+    next.total_hours = computeHours(next.time_in, next.time_out, next.break_minutes);
+    return next;
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/timesheets")({ component: Timesheets });
 
@@ -134,6 +193,7 @@ function Timesheets() {
   const [allTs, setAllTs] = useState<Timesheet[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [myName, setMyName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<Timesheet | null>(null);
   const [historyFor, setHistoryFor] = useState<Timesheet | null>(null);
@@ -142,18 +202,21 @@ function Timesheets() {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [mineRes, patientsRes, allRes, profilesRes] = await Promise.all([
+    const [mineRes, patientsRes, allRes, profilesRes, myProfileRes] = await Promise.all([
       supabase.from("timesheets").select("*").eq("staff_id", user.id).order("week_start", { ascending: false }),
       supabase.from("patients").select("id,first_name,last_name").eq("status", "active").order("last_name"),
       canApprove
         ? supabase.from("timesheets").select("*").in("status", ["submitted", "approved", "rejected"]).order("week_start", { ascending: false }).limit(200)
         : Promise.resolve({ data: [] } as any),
       canApprove ? supabase.from("profiles").select("id,full_name,email") : Promise.resolve({ data: [] } as any),
+      supabase.from("profiles").select("full_name,email").eq("id", user.id).maybeSingle(),
     ]);
     setMine((mineRes.data ?? []) as unknown as Timesheet[]);
     setPatients((patientsRes.data ?? []) as Patient[]);
     setAllTs(((allRes as any).data ?? []) as Timesheet[]);
     setProfiles(((profilesRes as any).data ?? []) as Profile[]);
+    const mp: any = (myProfileRes as any).data;
+    setMyName(mp?.full_name ?? mp?.email ?? user.email ?? "");
     setLoading(false);
   }, [user, canApprove]);
 
@@ -171,7 +234,7 @@ function Timesheets() {
       staff_id: user?.id ?? "",
       patient_id: null,
       client_name: "",
-      employee_name: "",
+      employee_name: myName,
       week_start: ws,
       hours: 0,
       notes: null,
@@ -435,6 +498,24 @@ function TimesheetEditor({
     return path;
   };
 
+  const syncFromVisits = useCallback(async (silent = false) => {
+    if (!form.staff_id || !form.patient_id) {
+      if (!silent) toast.error("Select a client first");
+      return;
+    }
+    const visits = await fetchVisitsForWeek(form.staff_id, form.patient_id, form.week_start);
+    setForm((f) => ({ ...f, days: applyVisitsToDays(f.days, visits) }));
+    if (!silent) toast.success(visits.length ? `Pulled ${visits.length} visit${visits.length === 1 ? "" : "s"}` : "No visits found for this week");
+  }, [form.staff_id, form.patient_id, form.week_start]);
+
+  // Auto-pull when patient/week changes on an editable draft
+  useEffect(() => {
+    if (!form.patient_id || form.id) return; // only auto-sync brand-new drafts
+    if (form.status !== "draft") return;
+    void syncFromVisits(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.patient_id, form.week_start]);
+
   const save = async (status: "draft" | "submitted") => {
     if (!form.patient_id) return toast.error("Please select a client (patient) for this timesheet");
     setSaving(true);
@@ -534,7 +615,14 @@ function TimesheetEditor({
           </FormSection>
 
           {/* Weekly hours grid */}
-          <FormSection title="Daily Hours" description="Enter time in/out per day; total hours auto-calculates from time and break.">
+          <FormSection title="Daily Hours" description="Times and mileage auto-fill from your check-in/check-out on Visits. Edit any cell to override manually.">
+            {!readOnly && (
+              <div className="flex justify-end -mt-2">
+                <button type="button" onClick={() => syncFromVisits(false)} className="inline-flex items-center gap-2 text-[10px] font-mono uppercase text-primary hover:underline">
+                  <RefreshCw className="size-3" /> Sync from Visits
+                </button>
+              </div>
+            )}
             <div className="overflow-x-auto border border-border">
               <table className="w-full text-xs">
                 <thead className="bg-muted text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
