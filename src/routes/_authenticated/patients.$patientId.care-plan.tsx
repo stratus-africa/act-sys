@@ -64,20 +64,24 @@ function CarePlan() {
   const [progressTarget, setProgressTarget] = useState<Goal | null>(null);
   const [interventionTarget, setInterventionTarget] = useState<Goal | null>(null);
 
+  const [patientMeta, setPatientMeta] = useState<{ name: string; mrn: string | null } | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const [g, i, pr, t, c] = await Promise.all([
+    const [g, i, pr, t, c, p] = await Promise.all([
       supabase.from("care_plan_goals").select("*").eq("patient_id", patientId).order("created_at", { ascending: false }),
       supabase.from("care_plan_interventions").select("*").eq("patient_id", patientId).order("created_at", { ascending: true }),
       supabase.from("care_plan_progress").select("*").eq("patient_id", patientId).order("recorded_at", { ascending: false }),
       supabase.from("care_plan_tasks").select("*").eq("patient_id", patientId).order("created_at", { ascending: true }),
       supabase.from("task_completions").select("*").eq("patient_id", patientId).order("completed_at", { ascending: false }).limit(200),
+      supabase.from("patients").select("first_name,last_name,mrn").eq("id", patientId).maybeSingle(),
     ]);
     setGoals((g.data ?? []) as Goal[]);
     setInterventions((i.data ?? []) as Intervention[]);
     setProgress((pr.data ?? []) as Progress[]);
     setTasks((t.data ?? []) as Task[]);
     setCompletions((c.data ?? []) as Completion[]);
+    setPatientMeta(p.data ? { name: `${p.data.last_name}, ${p.data.first_name}`, mrn: p.data.mrn ?? null } : null);
     setLoading(false);
   }, [patientId]);
 
