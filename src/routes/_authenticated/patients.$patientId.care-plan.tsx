@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
 import { toast } from "sonner";
-import { Check, Trash2, Plus, History, Target, ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
+import { Check, Trash2, Plus, History, Target, ChevronDown, ChevronRight, TrendingUp, FileDown } from "lucide-react";
+import { exportCarePlanPdf } from "@/lib/care-plan-pdf";
+import { notifyAdminsAndRns } from "@/lib/notify";
 
 export const Route = createFileRoute("/_authenticated/patients/$patientId/care-plan")({ component: CarePlan });
 
