@@ -103,7 +103,7 @@ export function AssessmentList({ kind, patientId }: { kind: Kind; patientId?: st
                     {!patientId && <td className="px-3 py-3 font-bold">{patients[r.patient_id] ?? r.patient_id.slice(0, 8)}</td>}
                     <td className="px-3 py-3 capitalize">{String(status).replace(/_/g, " ")}</td>
                     <td className="px-4 py-3 text-right">
-                      <Link to={meta.routePath as any} params={{ patientId: r.patient_id }} className="text-xs font-bold uppercase text-primary hover:underline">Open</Link>
+                      <Link to={meta.routePath as any} params={{ patientId: r.patient_id } as any} className="text-xs font-bold uppercase text-primary hover:underline">Open</Link>
                     </td>
                   </tr>
                 );
