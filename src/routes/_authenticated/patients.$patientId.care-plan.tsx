@@ -549,6 +549,16 @@ function ProgressModal({ goal, patientId, userId, onClose, onSaved }: { goal: Go
     });
     if (!error && status === "met") {
       await supabase.from("care_plan_goals").update({ status: "met" }).eq("id", goal.id);
+      // Notify admins + RNs so they can review.
+      const { data: actor } = await supabase.from("profiles").select("full_name,email").eq("id", userId ?? "").maybeSingle();
+      const actorName = actor?.full_name || actor?.email || "A clinician";
+      void notifyAdminsAndRns({
+        kind: "care_plan_goal_met",
+        title: `Goal met: ${goal.title}`,
+        body: `${actorName} marked this goal as met. Review the progress note when convenient.`,
+        link: `/patients/${patientId}/care-plan`,
+        metadata: { goal_id: goal.id, patient_id: patientId },
+      });
     }
     setSaving(false);
     if (error) return toast.error(error.message);
