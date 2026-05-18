@@ -18,8 +18,10 @@ import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite.'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
+import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments.index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff.$staffId'
 import { Route as AuthenticatedPatientsDocumentsRouteImport } from './routes/_authenticated/patients..documents'
 import { Route as AuthenticatedPatientsPatientIdRouteImport } from './routes/_authenticated/patients.$patientId'
@@ -79,6 +81,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAssessmentsRoute =
+  AuthenticatedAssessmentsRouteImport.update({
+    id: '/assessments',
+    path: '/assessments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AcceptInviteRoute = AcceptInviteRouteImport.update({
   id: '/accept-invite/',
   path: '/accept-invite/',
@@ -89,6 +97,12 @@ const AuthenticatedPatientsIndexRoute =
     id: '/patients/',
     path: '/patients/',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAssessmentsIndexRoute =
+  AuthenticatedAssessmentsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAssessmentsRoute,
   } as any)
 const AuthenticatedStaffStaffIdRoute =
   AuthenticatedStaffStaffIdRouteImport.update({
@@ -179,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/accept-invite/': typeof AcceptInviteRoute
+  '/assessments': typeof AuthenticatedAssessmentsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -188,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/allergies': typeof AuthenticatedPatientsPatientIdAllergiesRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
@@ -213,6 +229,7 @@ export interface FileRoutesByTo {
   '/visits': typeof AuthenticatedVisitsRoute
   '/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
   '/patients/$patientId/allergies': typeof AuthenticatedPatientsPatientIdAllergiesRoute
   '/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
@@ -232,6 +249,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/accept-invite/': typeof AcceptInviteRoute
+  '/_authenticated/assessments': typeof AuthenticatedAssessmentsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -241,6 +259,7 @@ export interface FileRoutesById {
   '/_authenticated/patients/$patientId': typeof AuthenticatedPatientsPatientIdRouteWithChildren
   '/_authenticated/patients/documents': typeof AuthenticatedPatientsDocumentsRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
   '/_authenticated/patients/$patientId/allergies': typeof AuthenticatedPatientsPatientIdAllergiesRoute
   '/_authenticated/patients/$patientId/assessment': typeof AuthenticatedPatientsPatientIdAssessmentRoute
@@ -260,6 +279,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accept-invite/'
+    | '/assessments'
     | '/dashboard'
     | '/reports'
     | '/settings'
@@ -269,6 +289,7 @@ export interface FileRouteTypes {
     | '/patients/$patientId'
     | '/patients/documents'
     | '/staff/$staffId'
+    | '/assessments/'
     | '/patients/'
     | '/patients/$patientId/allergies'
     | '/patients/$patientId/assessment'
@@ -294,6 +315,7 @@ export interface FileRouteTypes {
     | '/visits'
     | '/patients/documents'
     | '/staff/$staffId'
+    | '/assessments'
     | '/patients'
     | '/patients/$patientId/allergies'
     | '/patients/$patientId/assessment'
@@ -312,6 +334,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/accept-invite/'
+    | '/_authenticated/assessments'
     | '/_authenticated/dashboard'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
@@ -321,6 +344,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patients/$patientId'
     | '/_authenticated/patients/documents'
     | '/_authenticated/staff/$staffId'
+    | '/_authenticated/assessments/'
     | '/_authenticated/patients/'
     | '/_authenticated/patients/$patientId/allergies'
     | '/_authenticated/patients/$patientId/assessment'
@@ -407,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/assessments': {
+      id: '/_authenticated/assessments'
+      path: '/assessments'
+      fullPath: '/assessments'
+      preLoaderRoute: typeof AuthenticatedAssessmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/accept-invite/': {
       id: '/accept-invite/'
       path: '/accept-invite'
@@ -420,6 +451,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/patients/'
       preLoaderRoute: typeof AuthenticatedPatientsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/assessments/': {
+      id: '/_authenticated/assessments/'
+      path: '/'
+      fullPath: '/assessments/'
+      preLoaderRoute: typeof AuthenticatedAssessmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedAssessmentsRoute
     }
     '/_authenticated/staff/$staffId': {
       id: '/_authenticated/staff/$staffId'
@@ -522,6 +560,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAssessmentsRouteChildren {
+  AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
+}
+
+const AuthenticatedAssessmentsRouteChildren: AuthenticatedAssessmentsRouteChildren =
+  {
+    AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
+  }
+
+const AuthenticatedAssessmentsRouteWithChildren =
+  AuthenticatedAssessmentsRoute._addFileChildren(
+    AuthenticatedAssessmentsRouteChildren,
+  )
+
 interface AuthenticatedStaffRouteChildren {
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
 }
@@ -579,6 +631,7 @@ const AuthenticatedPatientsPatientIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -591,6 +644,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -616,3 +670,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
