@@ -14,6 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
+      applicant_documents: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          data: Json
+          file_path: string | null
+          id: string
+          kind: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signature_typed: string | null
+          signature_url: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          data?: Json
+          file_path?: string | null
+          id?: string
+          kind: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          data?: Json
+          file_path?: string | null
+          id?: string
+          kind?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicant_skills: {
+        Row: {
+          applicant_id: string
+          checklist_kind: string
+          created_at: string
+          created_by: string | null
+          id: string
+          observed_at: string | null
+          ratings: Json
+          rn_supervisor_name: string | null
+          signature_typed: string | null
+          signature_url: string | null
+          signed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          checklist_kind?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observed_at?: string | null
+          ratings?: Json
+          rn_supervisor_name?: string | null
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          checklist_kind?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observed_at?: string | null
+          ratings?: Json
+          rn_supervisor_name?: string | null
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicants: {
+        Row: {
+          address: string | null
+          applied_at: string
+          availability: Json | null
+          city: string | null
+          counties_willing: string[] | null
+          created_at: string
+          created_by: string | null
+          dob: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          first_name: string
+          hired_at: string | null
+          hired_user_id: string | null
+          id: string
+          interviewer: string | null
+          last_name: string
+          notes: string | null
+          pay_agreement: string | null
+          phone: string | null
+          position: string
+          rejection_reason: string | null
+          source: string | null
+          ssn_last4: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          applied_at?: string
+          availability?: Json | null
+          city?: string | null
+          counties_willing?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          dob?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          first_name: string
+          hired_at?: string | null
+          hired_user_id?: string | null
+          id?: string
+          interviewer?: string | null
+          last_name: string
+          notes?: string | null
+          pay_agreement?: string | null
+          phone?: string | null
+          position: string
+          rejection_reason?: string | null
+          source?: string | null
+          ssn_last4?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          applied_at?: string
+          availability?: Json | null
+          city?: string | null
+          counties_willing?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          dob?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          first_name?: string
+          hired_at?: string | null
+          hired_user_id?: string | null
+          id?: string
+          interviewer?: string | null
+          last_name?: string
+          notes?: string | null
+          pay_agreement?: string | null
+          phone?: string | null
+          position?: string
+          rejection_reason?: string | null
+          source?: string | null
+          ssn_last4?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1125,36 +1314,90 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          address: string | null
+          availability: Json | null
+          city: string | null
+          counties_willing: string[] | null
           created_at: string
+          department: string | null
+          dob: string | null
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
           full_name: string | null
+          hire_date: string | null
+          hr_notes: string | null
           id: string
           license_no: string | null
           notification_prefs: Json
+          pay_rate: number | null
+          pay_type: string | null
           phone: string | null
+          position: string | null
+          ssn_last4: string | null
+          state: string | null
+          termination_date: string | null
           updated_at: string
+          zip: string | null
         }
         Insert: {
           active?: boolean
+          address?: string | null
+          availability?: Json | null
+          city?: string | null
+          counties_willing?: string[] | null
           created_at?: string
+          department?: string | null
+          dob?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           full_name?: string | null
+          hire_date?: string | null
+          hr_notes?: string | null
           id: string
           license_no?: string | null
           notification_prefs?: Json
+          pay_rate?: number | null
+          pay_type?: string | null
           phone?: string | null
+          position?: string | null
+          ssn_last4?: string | null
+          state?: string | null
+          termination_date?: string | null
           updated_at?: string
+          zip?: string | null
         }
         Update: {
           active?: boolean
+          address?: string | null
+          availability?: Json | null
+          city?: string | null
+          counties_willing?: string[] | null
           created_at?: string
+          department?: string | null
+          dob?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
           full_name?: string | null
+          hire_date?: string | null
+          hr_notes?: string | null
           id?: string
           license_no?: string | null
           notification_prefs?: Json
+          pay_rate?: number | null
+          pay_type?: string | null
           phone?: string | null
+          position?: string | null
+          ssn_last4?: string | null
+          state?: string | null
+          termination_date?: string | null
           updated_at?: string
+          zip?: string | null
         }
         Relationships: []
       }
@@ -1314,6 +1557,54 @@ export type Database = {
           patient_id?: string
           pressure_areas?: Json
           signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_credentials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_on: string | null
+          file_path: string | null
+          id: string
+          issued_on: string | null
+          kind: string
+          name: string
+          notes: string | null
+          number: string | null
+          staff_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_on?: string | null
+          file_path?: string | null
+          id?: string
+          issued_on?: string | null
+          kind: string
+          name: string
+          notes?: string | null
+          number?: string | null
+          staff_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_on?: string | null
+          file_path?: string | null
+          id?: string
+          issued_on?: string | null
+          kind?: string
+          name?: string
+          notes?: string | null
+          number?: string | null
+          staff_id?: string
           status?: string
           updated_at?: string
         }
