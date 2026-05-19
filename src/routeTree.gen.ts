@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
+import { Route as AuthenticatedApplicantsRouteImport } from './routes/_authenticated/applicants'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite.'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments.index'
@@ -93,6 +94,11 @@ const AuthenticatedAssessmentsRoute =
     path: '/assessments',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedApplicantsRoute = AuthenticatedApplicantsRouteImport.update({
+  id: '/applicants',
+  path: '/applicants',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AcceptInviteRoute = AcceptInviteRouteImport.update({
   id: '/accept-invite/',
   path: '/accept-invite/',
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/accept-invite/': typeof AcceptInviteRoute
+  '/applicants': typeof AuthenticatedApplicantsRoute
   '/assessments': typeof AuthenticatedAssessmentsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/accept-invite': typeof AcceptInviteRoute
+  '/applicants': typeof AuthenticatedApplicantsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/accept-invite/': typeof AcceptInviteRoute
+  '/_authenticated/applicants': typeof AuthenticatedApplicantsRoute
   '/_authenticated/assessments': typeof AuthenticatedAssessmentsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accept-invite/'
+    | '/applicants'
     | '/assessments'
     | '/dashboard'
     | '/reports'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accept-invite'
+    | '/applicants'
     | '/dashboard'
     | '/reports'
     | '/settings'
@@ -406,6 +417,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/accept-invite/'
+    | '/_authenticated/applicants'
     | '/_authenticated/assessments'
     | '/_authenticated/dashboard'
     | '/_authenticated/reports'
@@ -514,6 +526,13 @@ declare module '@tanstack/react-router' {
       path: '/assessments'
       fullPath: '/assessments'
       preLoaderRoute: typeof AuthenticatedAssessmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/applicants': {
+      id: '/_authenticated/applicants'
+      path: '/applicants'
+      fullPath: '/applicants'
+      preLoaderRoute: typeof AuthenticatedApplicantsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/accept-invite/': {
@@ -767,6 +786,7 @@ const AuthenticatedPatientsPatientIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedApplicantsRoute: typeof AuthenticatedApplicantsRoute
   AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
@@ -780,6 +800,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedApplicantsRoute: AuthenticatedApplicantsRoute,
   AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
