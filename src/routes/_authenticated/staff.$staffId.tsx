@@ -3,15 +3,24 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
-import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
+import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { Switch } from "@/components/ui/switch";
+import { CREDENTIAL_KINDS } from "@/lib/hr-constants";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X } from "lucide-react";
+import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X, Plus, AlertTriangle, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/$staffId")({ component: StaffProfilePage });
 
-type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; created_at: string };
+type Profile = {
+  id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; created_at: string;
+  address: string | null; city: string | null; state: string | null; zip: string | null;
+  dob: string | null; ssn_last4: string | null; hire_date: string | null; termination_date: string | null;
+  position: string | null; department: string | null; pay_type: string | null; pay_rate: number | null;
+  emergency_contact_name: string | null; emergency_contact_phone: string | null; emergency_contact_relation: string | null;
+  hr_notes: string | null;
+};
 type RoleName = "admin" | "rn" | "caregiver" | "patient";
+type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null };
 
 const PERMISSION_KEYS: { key: string; label: string }[] = [
   { key: "manage_staff", label: "Manage staff & invitations" },
@@ -40,15 +49,17 @@ function StaffProfilePage() {
   const [timesheets, setTimesheets] = useState<any[]>([]);
   const [cgAssessments, setCgAssessments] = useState<any[]>([]);
   const [rnAssessments, setRnAssessments] = useState<any[]>([]);
-  const [edit, setEdit] = useState({ full_name: "", phone: "", license_no: "" });
+  const [edit, setEdit] = useState<Partial<Profile>>({});
   const [saving, setSaving] = useState(false);
   const [permsByRole, setPermsByRole] = useState<Record<string, Record<string, boolean>>>({});
   const [assignRole, setAssignRole] = useState<"caregiver" | "rn">("caregiver");
   const [assignPatientId, setAssignPatientId] = useState("");
   const [assigning, setAssigning] = useState(false);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [newCred, setNewCred] = useState<Partial<Credential>>({ kind: "license", name: "", status: "active" });
 
   const load = useCallback(async () => {
-    const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }, { data: rp }, { data: pats }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }, { data: rp }, { data: pats }, { data: creds }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", staffId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", staffId),
       supabase.from("patient_assignments").select("*, patients:patient_id(id, first_name, last_name)").eq("staff_id", staffId),
@@ -58,6 +69,7 @@ function StaffProfilePage() {
       supabase.from("rn_assessments").select("id, assessment_date, patient_id, patients:patient_id(first_name, last_name), tasks").eq("nurse_id", staffId).order("assessment_date", { ascending: false }).limit(8),
       supabase.from("role_permissions").select("role, permissions"),
       supabase.from("patients").select("id, first_name, last_name").eq("status", "active").order("last_name"),
+      (supabase.from("staff_credentials" as any) as any).select("*").eq("staff_id", staffId).order("expires_on", { ascending: true }),
     ]);
     setProfile(p as Profile | null);
     setRoles(((r ?? []) as Array<{ role: RoleName }>).map((x) => x.role));
@@ -67,10 +79,11 @@ function StaffProfilePage() {
     setCgAssessments(cga ?? []);
     setRnAssessments(rna ?? []);
     setAllPatients(pats ?? []);
+    setCredentials((creds ?? []) as Credential[]);
     const map: Record<string, Record<string, boolean>> = {};
     (rp ?? []).forEach((row: any) => { map[row.role] = (row.permissions ?? {}) as Record<string, boolean>; });
     setPermsByRole(map);
-    if (p) setEdit({ full_name: p.full_name ?? "", phone: p.phone ?? "", license_no: p.license_no ?? "" });
+    if (p) setEdit(p as Profile);
   }, [staffId]);
 
   useEffect(() => { load(); }, [load]);
@@ -142,22 +155,10 @@ function StaffProfilePage() {
           <div className="space-y-6 min-w-0">
             <FormSection title="Identity" description={canEdit ? "Update profile details." : "Read-only view."}>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <FieldLabel>Full Name</FieldLabel>
-                  <TextInput value={edit.full_name} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, full_name: e.target.value }))} />
-                </div>
-                <div>
-                  <FieldLabel>Email</FieldLabel>
-                  <TextInput value={profile.email ?? ""} disabled />
-                </div>
-                <div>
-                  <FieldLabel>Phone</FieldLabel>
-                  <TextInput value={edit.phone} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, phone: e.target.value }))} />
-                </div>
-                <div>
-                  <FieldLabel>License Number</FieldLabel>
-                  <TextInput value={edit.license_no} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, license_no: e.target.value }))} />
-                </div>
+                <div><FieldLabel>Full Name</FieldLabel><TextInput value={edit.full_name ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, full_name: e.target.value }))} /></div>
+                <div><FieldLabel>Email</FieldLabel><TextInput value={profile.email ?? ""} disabled /></div>
+                <div><FieldLabel>Phone</FieldLabel><TextInput value={edit.phone ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, phone: e.target.value }))} /></div>
+                <div><FieldLabel>License Number</FieldLabel><TextInput value={edit.license_no ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, license_no: e.target.value }))} /></div>
               </div>
               {canEdit && (
                 <button type="button" onClick={save} disabled={saving} className="mt-4 px-5 py-2 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground disabled:opacity-40">
@@ -165,6 +166,82 @@ function StaffProfilePage() {
                 </button>
               )}
             </FormSection>
+
+            {isAdmin && (
+              <FormSection title="HR Information" description="Address, hire details, emergency contact.">
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2"><FieldLabel>Address</FieldLabel><TextInput value={edit.address ?? ""} onChange={(e) => setEdit((s) => ({ ...s, address: e.target.value }))} /></div>
+                  <div><FieldLabel>City</FieldLabel><TextInput value={edit.city ?? ""} onChange={(e) => setEdit((s) => ({ ...s, city: e.target.value }))} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><FieldLabel>State</FieldLabel><TextInput value={edit.state ?? ""} onChange={(e) => setEdit((s) => ({ ...s, state: e.target.value }))} /></div>
+                    <div><FieldLabel>ZIP</FieldLabel><TextInput value={edit.zip ?? ""} onChange={(e) => setEdit((s) => ({ ...s, zip: e.target.value }))} /></div>
+                  </div>
+                  <div><FieldLabel>Date of Birth</FieldLabel><TextInput type="date" value={edit.dob ?? ""} onChange={(e) => setEdit((s) => ({ ...s, dob: e.target.value }))} /></div>
+                  <div><FieldLabel>SSN (last 4)</FieldLabel><TextInput maxLength={4} value={edit.ssn_last4 ?? ""} onChange={(e) => setEdit((s) => ({ ...s, ssn_last4: e.target.value }))} /></div>
+                  <div><FieldLabel>Hire Date</FieldLabel><TextInput type="date" value={edit.hire_date ?? ""} onChange={(e) => setEdit((s) => ({ ...s, hire_date: e.target.value }))} /></div>
+                  <div><FieldLabel>Termination Date</FieldLabel><TextInput type="date" value={edit.termination_date ?? ""} onChange={(e) => setEdit((s) => ({ ...s, termination_date: e.target.value }))} /></div>
+                  <div><FieldLabel>Position</FieldLabel><TextInput value={edit.position ?? ""} onChange={(e) => setEdit((s) => ({ ...s, position: e.target.value }))} /></div>
+                  <div><FieldLabel>Department</FieldLabel><TextInput value={edit.department ?? ""} onChange={(e) => setEdit((s) => ({ ...s, department: e.target.value }))} /></div>
+                  <div>
+                    <FieldLabel>Pay Type</FieldLabel>
+                    <select value={edit.pay_type ?? ""} onChange={(e) => setEdit((s) => ({ ...s, pay_type: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-sm">
+                      <option value="">—</option><option value="hourly">Hourly</option><option value="salary">Salary</option><option value="contractor">Contractor</option>
+                    </select>
+                  </div>
+                  <div><FieldLabel>Pay Rate</FieldLabel><TextInput type="number" step="0.01" value={edit.pay_rate ?? ""} onChange={(e) => setEdit((s) => ({ ...s, pay_rate: e.target.value === "" ? null : Number(e.target.value) }))} /></div>
+                  <div><FieldLabel>Emergency Contact Name</FieldLabel><TextInput value={edit.emergency_contact_name ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_name: e.target.value }))} /></div>
+                  <div><FieldLabel>Emergency Contact Phone</FieldLabel><TextInput value={edit.emergency_contact_phone ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_phone: e.target.value }))} /></div>
+                  <div><FieldLabel>Relationship</FieldLabel><TextInput value={edit.emergency_contact_relation ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_relation: e.target.value }))} /></div>
+                  <div className="md:col-span-2"><FieldLabel>HR Notes</FieldLabel><TextArea rows={3} value={edit.hr_notes ?? ""} onChange={(e) => setEdit((s) => ({ ...s, hr_notes: e.target.value }))} /></div>
+                </div>
+              </FormSection>
+            )}
+
+            {isAdmin && (
+              <FormSection title="Credentials & Expirations" description="Licenses, certifications, TB / Hep B status, etc.">
+                <div className="grid md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end pb-4 mb-4 border-b border-border">
+                  <div>
+                    <FieldLabel>Type</FieldLabel>
+                    <select value={newCred.kind} onChange={(e) => setNewCred((s) => ({ ...s, kind: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-sm">
+                      {CREDENTIAL_KINDS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+                  <div><FieldLabel>Name / Description</FieldLabel><TextInput value={newCred.name ?? ""} onChange={(e) => setNewCred((s) => ({ ...s, name: e.target.value }))} /></div>
+                  <div><FieldLabel>Expires On</FieldLabel><TextInput type="date" value={newCred.expires_on ?? ""} onChange={(e) => setNewCred((s) => ({ ...s, expires_on: e.target.value }))} /></div>
+                  <button onClick={async () => {
+                    if (!newCred.name?.trim()) return toast.error("Name required");
+                    const { error } = await (supabase.from("staff_credentials" as any) as any).insert({ staff_id: staffId, kind: newCred.kind, name: newCred.name, expires_on: newCred.expires_on || null, created_by: user?.id });
+                    if (error) return toast.error(error.message);
+                    setNewCred({ kind: "license", name: "", status: "active" });
+                    load();
+                  }} className="bg-primary text-primary-foreground px-3 py-2 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1"><Plus className="size-3.5" /> Add</button>
+                </div>
+                {credentials.length === 0 ? <div className="text-xs text-muted-foreground">No credentials on file.</div> : (
+                  <ul className="divide-y divide-border">
+                    {credentials.map((c) => {
+                      const exp = c.expires_on ? new Date(c.expires_on) : null;
+                      const expiringSoon = exp && exp.getTime() - Date.now() < 30 * 86400000;
+                      const expired = exp && exp.getTime() < Date.now();
+                      return (
+                        <li key={c.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                          <div className="flex-1">
+                            <div className="font-semibold">{c.name} <span className="text-[10px] font-mono uppercase text-muted-foreground ml-1">{CREDENTIAL_KINDS.find((k) => k.value === c.kind)?.label ?? c.kind}</span></div>
+                            {c.expires_on && <div className={"text-[11px] font-mono " + (expired ? "text-destructive" : expiringSoon ? "text-amber-600" : "text-muted-foreground")}>
+                              {expired ? "Expired" : expiringSoon ? "Expires soon" : "Expires"} {c.expires_on}
+                              {(expired || expiringSoon) && <AlertTriangle className="size-3 inline ml-1" />}
+                            </div>}
+                          </div>
+                          <button onClick={async () => {
+                            await (supabase.from("staff_credentials" as any) as any).delete().eq("id", c.id);
+                            load();
+                          }} className="text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </FormSection>
+            )}
 
             {(roles.includes("caregiver") || roles.includes("rn")) && (
               <FormSection title="Patient Assignments" description={isAdmin ? "Manage which patients are assigned to this staff member." : "Patients currently assigned."}>

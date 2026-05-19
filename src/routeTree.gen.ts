@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
+import { Route as AuthenticatedApplicantsRouteImport } from './routes/_authenticated/applicants'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite.'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
 import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments.index'
@@ -29,6 +30,7 @@ import { Route as AuthenticatedAssessmentsSkinRouteImport } from './routes/_auth
 import { Route as AuthenticatedAssessmentsRnRouteImport } from './routes/_authenticated/assessments.rn'
 import { Route as AuthenticatedAssessmentsParticipantRouteImport } from './routes/_authenticated/assessments.participant'
 import { Route as AuthenticatedAssessmentsCaregiverRouteImport } from './routes/_authenticated/assessments.caregiver'
+import { Route as AuthenticatedApplicantsApplicantIdRouteImport } from './routes/_authenticated/applicants.$applicantId'
 import { Route as AuthenticatedPatientsPatientIdIndexRouteImport } from './routes/_authenticated/patients.$patientId.index'
 import { Route as AuthenticatedPatientsPatientIdVisitsRouteImport } from './routes/_authenticated/patients.$patientId.visits'
 import { Route as AuthenticatedPatientsPatientIdSkinRouteImport } from './routes/_authenticated/patients.$patientId.skin'
@@ -93,6 +95,11 @@ const AuthenticatedAssessmentsRoute =
     path: '/assessments',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedApplicantsRoute = AuthenticatedApplicantsRouteImport.update({
+  id: '/applicants',
+  path: '/applicants',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AcceptInviteRoute = AcceptInviteRouteImport.update({
   id: '/accept-invite/',
   path: '/accept-invite/',
@@ -151,6 +158,12 @@ const AuthenticatedAssessmentsCaregiverRoute =
     id: '/caregiver',
     path: '/caregiver',
     getParentRoute: () => AuthenticatedAssessmentsRoute,
+  } as any)
+const AuthenticatedApplicantsApplicantIdRoute =
+  AuthenticatedApplicantsApplicantIdRouteImport.update({
+    id: '/$applicantId',
+    path: '/$applicantId',
+    getParentRoute: () => AuthenticatedApplicantsRoute,
   } as any)
 const AuthenticatedPatientsPatientIdIndexRoute =
   AuthenticatedPatientsPatientIdIndexRouteImport.update({
@@ -235,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/accept-invite/': typeof AcceptInviteRoute
+  '/applicants': typeof AuthenticatedApplicantsRouteWithChildren
   '/assessments': typeof AuthenticatedAssessmentsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -242,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/applicants/$applicantId': typeof AuthenticatedApplicantsApplicantIdRoute
   '/assessments/caregiver': typeof AuthenticatedAssessmentsCaregiverRoute
   '/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/assessments/rn': typeof AuthenticatedAssessmentsRnRoute
@@ -269,12 +284,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/accept-invite': typeof AcceptInviteRoute
+  '/applicants': typeof AuthenticatedApplicantsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/staff': typeof AuthenticatedStaffRouteWithChildren
   '/timesheets': typeof AuthenticatedTimesheetsRoute
   '/visits': typeof AuthenticatedVisitsRoute
+  '/applicants/$applicantId': typeof AuthenticatedApplicantsApplicantIdRoute
   '/assessments/caregiver': typeof AuthenticatedAssessmentsCaregiverRoute
   '/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/assessments/rn': typeof AuthenticatedAssessmentsRnRoute
@@ -303,6 +320,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/accept-invite/': typeof AcceptInviteRoute
+  '/_authenticated/applicants': typeof AuthenticatedApplicantsRouteWithChildren
   '/_authenticated/assessments': typeof AuthenticatedAssessmentsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -310,6 +328,7 @@ export interface FileRoutesById {
   '/_authenticated/staff': typeof AuthenticatedStaffRouteWithChildren
   '/_authenticated/timesheets': typeof AuthenticatedTimesheetsRoute
   '/_authenticated/visits': typeof AuthenticatedVisitsRoute
+  '/_authenticated/applicants/$applicantId': typeof AuthenticatedApplicantsApplicantIdRoute
   '/_authenticated/assessments/caregiver': typeof AuthenticatedAssessmentsCaregiverRoute
   '/_authenticated/assessments/participant': typeof AuthenticatedAssessmentsParticipantRoute
   '/_authenticated/assessments/rn': typeof AuthenticatedAssessmentsRnRoute
@@ -339,6 +358,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accept-invite/'
+    | '/applicants'
     | '/assessments'
     | '/dashboard'
     | '/reports'
@@ -346,6 +366,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/applicants/$applicantId'
     | '/assessments/caregiver'
     | '/assessments/participant'
     | '/assessments/rn'
@@ -373,12 +394,14 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accept-invite'
+    | '/applicants'
     | '/dashboard'
     | '/reports'
     | '/settings'
     | '/staff'
     | '/timesheets'
     | '/visits'
+    | '/applicants/$applicantId'
     | '/assessments/caregiver'
     | '/assessments/participant'
     | '/assessments/rn'
@@ -406,6 +429,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/accept-invite/'
+    | '/_authenticated/applicants'
     | '/_authenticated/assessments'
     | '/_authenticated/dashboard'
     | '/_authenticated/reports'
@@ -413,6 +437,7 @@ export interface FileRouteTypes {
     | '/_authenticated/staff'
     | '/_authenticated/timesheets'
     | '/_authenticated/visits'
+    | '/_authenticated/applicants/$applicantId'
     | '/_authenticated/assessments/caregiver'
     | '/_authenticated/assessments/participant'
     | '/_authenticated/assessments/rn'
@@ -516,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAssessmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/applicants': {
+      id: '/_authenticated/applicants'
+      path: '/applicants'
+      fullPath: '/applicants'
+      preLoaderRoute: typeof AuthenticatedApplicantsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/accept-invite/': {
       id: '/accept-invite/'
       path: '/accept-invite'
@@ -585,6 +617,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/assessments/caregiver'
       preLoaderRoute: typeof AuthenticatedAssessmentsCaregiverRouteImport
       parentRoute: typeof AuthenticatedAssessmentsRoute
+    }
+    '/_authenticated/applicants/$applicantId': {
+      id: '/_authenticated/applicants/$applicantId'
+      path: '/$applicantId'
+      fullPath: '/applicants/$applicantId'
+      preLoaderRoute: typeof AuthenticatedApplicantsApplicantIdRouteImport
+      parentRoute: typeof AuthenticatedApplicantsRoute
     }
     '/_authenticated/patients/$patientId/': {
       id: '/_authenticated/patients/$patientId/'
@@ -680,6 +719,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedApplicantsRouteChildren {
+  AuthenticatedApplicantsApplicantIdRoute: typeof AuthenticatedApplicantsApplicantIdRoute
+}
+
+const AuthenticatedApplicantsRouteChildren: AuthenticatedApplicantsRouteChildren =
+  {
+    AuthenticatedApplicantsApplicantIdRoute:
+      AuthenticatedApplicantsApplicantIdRoute,
+  }
+
+const AuthenticatedApplicantsRouteWithChildren =
+  AuthenticatedApplicantsRoute._addFileChildren(
+    AuthenticatedApplicantsRouteChildren,
+  )
+
 interface AuthenticatedAssessmentsRouteChildren {
   AuthenticatedAssessmentsCaregiverRoute: typeof AuthenticatedAssessmentsCaregiverRoute
   AuthenticatedAssessmentsParticipantRoute: typeof AuthenticatedAssessmentsParticipantRoute
@@ -767,6 +821,7 @@ const AuthenticatedPatientsPatientIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedApplicantsRoute: typeof AuthenticatedApplicantsRouteWithChildren
   AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
@@ -780,6 +835,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedApplicantsRoute: AuthenticatedApplicantsRouteWithChildren,
   AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
