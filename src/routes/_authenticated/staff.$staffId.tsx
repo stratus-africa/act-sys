@@ -59,7 +59,7 @@ function StaffProfilePage() {
   const [newCred, setNewCred] = useState<Partial<Credential>>({ kind: "license", name: "", status: "active" });
 
   const load = useCallback(async () => {
-    const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }, { data: rp }, { data: pats }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }, { data: rp }, { data: pats }, { data: creds }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", staffId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", staffId),
       supabase.from("patient_assignments").select("*, patients:patient_id(id, first_name, last_name)").eq("staff_id", staffId),
@@ -69,6 +69,7 @@ function StaffProfilePage() {
       supabase.from("rn_assessments").select("id, assessment_date, patient_id, patients:patient_id(first_name, last_name), tasks").eq("nurse_id", staffId).order("assessment_date", { ascending: false }).limit(8),
       supabase.from("role_permissions").select("role, permissions"),
       supabase.from("patients").select("id, first_name, last_name").eq("status", "active").order("last_name"),
+      (supabase.from("staff_credentials" as any) as any).select("*").eq("staff_id", staffId).order("expires_on", { ascending: true }),
     ]);
     setProfile(p as Profile | null);
     setRoles(((r ?? []) as Array<{ role: RoleName }>).map((x) => x.role));
@@ -78,10 +79,11 @@ function StaffProfilePage() {
     setCgAssessments(cga ?? []);
     setRnAssessments(rna ?? []);
     setAllPatients(pats ?? []);
+    setCredentials((creds ?? []) as Credential[]);
     const map: Record<string, Record<string, boolean>> = {};
     (rp ?? []).forEach((row: any) => { map[row.role] = (row.permissions ?? {}) as Record<string, boolean>; });
     setPermsByRole(map);
-    if (p) setEdit({ full_name: p.full_name ?? "", phone: p.phone ?? "", license_no: p.license_no ?? "" });
+    if (p) setEdit(p as Profile);
   }, [staffId]);
 
   useEffect(() => { load(); }, [load]);
