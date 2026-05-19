@@ -49,12 +49,14 @@ function StaffProfilePage() {
   const [timesheets, setTimesheets] = useState<any[]>([]);
   const [cgAssessments, setCgAssessments] = useState<any[]>([]);
   const [rnAssessments, setRnAssessments] = useState<any[]>([]);
-  const [edit, setEdit] = useState({ full_name: "", phone: "", license_no: "" });
+  const [edit, setEdit] = useState<Partial<Profile>>({});
   const [saving, setSaving] = useState(false);
   const [permsByRole, setPermsByRole] = useState<Record<string, Record<string, boolean>>>({});
   const [assignRole, setAssignRole] = useState<"caregiver" | "rn">("caregiver");
   const [assignPatientId, setAssignPatientId] = useState("");
   const [assigning, setAssigning] = useState(false);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [newCred, setNewCred] = useState<Partial<Credential>>({ kind: "license", name: "", status: "active" });
 
   const load = useCallback(async () => {
     const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }, { data: rp }, { data: pats }] = await Promise.all([
