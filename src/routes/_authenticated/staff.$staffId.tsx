@@ -3,15 +3,24 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
-import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
+import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { Switch } from "@/components/ui/switch";
+import { CREDENTIAL_KINDS } from "@/lib/hr-constants";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X } from "lucide-react";
+import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X, Plus, AlertTriangle, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/$staffId")({ component: StaffProfilePage });
 
-type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; created_at: string };
+type Profile = {
+  id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; created_at: string;
+  address: string | null; city: string | null; state: string | null; zip: string | null;
+  dob: string | null; ssn_last4: string | null; hire_date: string | null; termination_date: string | null;
+  position: string | null; department: string | null; pay_type: string | null; pay_rate: number | null;
+  emergency_contact_name: string | null; emergency_contact_phone: string | null; emergency_contact_relation: string | null;
+  hr_notes: string | null;
+};
 type RoleName = "admin" | "rn" | "caregiver" | "patient";
+type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null };
 
 const PERMISSION_KEYS: { key: string; label: string }[] = [
   { key: "manage_staff", label: "Manage staff & invitations" },
