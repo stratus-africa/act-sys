@@ -17,6 +17,7 @@ const ALL_NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; 
 const SETTINGS_CHILDREN: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
   { to: "/settings", label: "General", icon: SlidersHorizontal, roles: ["admin", "rn", "caregiver", "patient"] },
   { to: "/staff", label: "Staff", icon: UserCog, roles: ["admin"] },
+  { to: "/applicants", label: "Applicants", icon: UserPlus, roles: ["admin", "rn"] },
 ];
 
 const ROLE_LABEL: Record<AppRole, string> = {
