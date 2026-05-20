@@ -118,7 +118,7 @@ function StaffProfilePage() {
         hr_notes: edit.hr_notes || null,
       });
     }
-    const { error } = await supabase.from("profiles").update(payload).eq("id", staffId);
+    const { error } = await (supabase.from("profiles") as any).update(payload).eq("id", staffId);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Profile saved");
