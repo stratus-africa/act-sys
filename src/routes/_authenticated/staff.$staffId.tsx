@@ -20,7 +20,7 @@ type Profile = {
   hr_notes: string | null;
 };
 type RoleName = "admin" | "rn" | "caregiver" | "patient";
-type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null };
+type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null; file_path: string | null };
 
 const PERMISSION_KEYS: { key: string; label: string }[] = [
   { key: "manage_staff", label: "Manage staff & invitations" },
@@ -241,21 +241,68 @@ function StaffProfilePage() {
                   <ul className="divide-y divide-border">
                     {credentials.map((c) => {
                       const exp = c.expires_on ? new Date(c.expires_on) : null;
-                      const expiringSoon = exp && exp.getTime() - Date.now() < 30 * 86400000;
+                      const expiringSoon = exp && exp.getTime() - Date.now() < 30 * 86400000 && exp.getTime() > Date.now();
                       const expired = exp && exp.getTime() < Date.now();
+                      const isExpiredStatus = c.status === "expired" || expired;
                       return (
-                        <li key={c.id} className="py-2 flex items-center justify-between gap-3 text-sm">
-                          <div className="flex-1">
-                            <div className="font-semibold">{c.name} <span className="text-[10px] font-mono uppercase text-muted-foreground ml-1">{CREDENTIAL_KINDS.find((k) => k.value === c.kind)?.label ?? c.kind}</span></div>
-                            {c.expires_on && <div className={"text-[11px] font-mono " + (expired ? "text-destructive" : expiringSoon ? "text-amber-600" : "text-muted-foreground")}>
-                              {expired ? "Expired" : expiringSoon ? "Expires soon" : "Expires"} {c.expires_on}
-                              {(expired || expiringSoon) && <AlertTriangle className="size-3 inline ml-1" />}
+                        <li key={c.id} className="py-3 grid md:grid-cols-[1fr_auto_auto_auto_auto] gap-2 items-center text-sm">
+                          <div className="min-w-0">
+                            <div className="font-semibold flex items-center gap-2 flex-wrap">
+                              <input
+                                defaultValue={c.name}
+                                onBlur={async (e) => {
+                                  if (e.target.value === c.name) return;
+                                  const { error } = await (supabase.from("staff_credentials" as any) as any).update({ name: e.target.value }).eq("id", c.id);
+                                  if (error) toast.error(error.message); else { toast.success("Updated"); load(); }
+                                }}
+                                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none px-1 py-0.5 min-w-40"
+                              />
+                              <span className="text-[10px] font-mono uppercase text-muted-foreground">{CREDENTIAL_KINDS.find((k) => k.value === c.kind)?.label ?? c.kind}</span>
+                              <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (isExpiredStatus ? "bg-destructive/10 text-destructive" : expiringSoon ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "bg-primary/10 text-primary")}>{isExpiredStatus ? "expired" : expiringSoon ? "expiring" : c.status}</span>
+                            </div>
+                            {c.expires_on && <div className={"text-[11px] font-mono mt-0.5 " + (isExpiredStatus ? "text-destructive" : expiringSoon ? "text-amber-600" : "text-muted-foreground")}>
+                              {isExpiredStatus ? "Expired" : expiringSoon ? "Expires soon" : "Expires"} {c.expires_on}
+                              {(isExpiredStatus || expiringSoon) && <AlertTriangle className="size-3 inline ml-1" />}
                             </div>}
                           </div>
-                          <button onClick={async () => {
-                            await (supabase.from("staff_credentials" as any) as any).delete().eq("id", c.id);
-                            load();
-                          }} className="text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                          <input type="date" defaultValue={c.expires_on ?? ""} onBlur={async (e) => {
+                            const v = e.target.value || null;
+                            if (v === c.expires_on) return;
+                            const { error } = await (supabase.from("staff_credentials" as any) as any).update({ expires_on: v }).eq("id", c.id);
+                            if (error) toast.error(error.message); else load();
+                          }} className="px-2 py-1 border border-border bg-background text-xs" />
+                          {c.file_path ? (
+                            <button onClick={async () => {
+                              const { data, error } = await supabase.storage.from("hr-documents").createSignedUrl(c.file_path!, 60);
+                              if (error || !data) return toast.error(error?.message ?? "Failed");
+                              window.open(data.signedUrl, "_blank");
+                            }} className="text-xs underline">View file</button>
+                          ) : <span className="text-[10px] text-muted-foreground">no file</span>}
+                          <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-2 py-1 border border-border hover:border-primary">
+                            <Plus className="size-3" /> {c.file_path ? "Replace" : "Upload"}
+                            <input type="file" className="hidden" onChange={async (e) => {
+                              const f = e.target.files?.[0]; if (!f) return;
+                              const path = `staff/${staffId}/${c.id}-${Date.now()}-${f.name}`;
+                              const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, f, { upsert: true });
+                              if (upErr) return toast.error(upErr.message);
+                              const { error } = await (supabase.from("staff_credentials" as any) as any).update({ file_path: path }).eq("id", c.id);
+                              if (error) toast.error(error.message); else { toast.success("Uploaded"); load(); }
+                              e.currentTarget.value = "";
+                            }} />
+                          </label>
+                          <div className="flex items-center gap-1">
+                            {!isExpiredStatus && (
+                              <button title="Mark expired" onClick={async () => {
+                                await (supabase.from("staff_credentials" as any) as any).update({ status: "expired" }).eq("id", c.id);
+                                load();
+                              }} className="text-xs px-2 py-1 text-amber-700 hover:bg-amber-500/10">Expire</button>
+                            )}
+                            <button onClick={async () => {
+                              if (!confirm("Delete this credential?")) return;
+                              await (supabase.from("staff_credentials" as any) as any).delete().eq("id", c.id);
+                              load();
+                            }} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="size-3.5" /></button>
+                          </div>
                         </li>
                       );
                     })}
