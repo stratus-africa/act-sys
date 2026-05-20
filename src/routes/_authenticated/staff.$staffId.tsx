@@ -93,11 +93,32 @@ function StaffProfilePage() {
 
   const save = async () => {
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
+    const payload: Record<string, any> = {
       full_name: edit.full_name || null,
       phone: edit.phone || null,
       license_no: edit.license_no || null,
-    }).eq("id", staffId);
+    };
+    if (isAdmin) {
+      Object.assign(payload, {
+        address: edit.address || null,
+        city: edit.city || null,
+        state: edit.state || null,
+        zip: edit.zip || null,
+        dob: edit.dob || null,
+        ssn_last4: edit.ssn_last4 || null,
+        hire_date: edit.hire_date || null,
+        termination_date: edit.termination_date || null,
+        position: edit.position || null,
+        department: edit.department || null,
+        pay_type: edit.pay_type || null,
+        pay_rate: edit.pay_rate ?? null,
+        emergency_contact_name: edit.emergency_contact_name || null,
+        emergency_contact_phone: edit.emergency_contact_phone || null,
+        emergency_contact_relation: edit.emergency_contact_relation || null,
+        hr_notes: edit.hr_notes || null,
+      });
+    }
+    const { error } = await (supabase.from("profiles") as any).update(payload).eq("id", staffId);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Profile saved");

@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ClipboardList, CalendarDays, FileText, Settings, LogOut, UserCog, ChevronDown, ChevronRight, SlidersHorizontal, Stethoscope } from "lucide-react";
+import { LayoutDashboard, Users, ClipboardList, CalendarDays, FileText, Settings, LogOut, UserCog, ChevronDown, ChevronRight, SlidersHorizontal, Stethoscope, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, type AppRole } from "@/lib/use-current-user";
@@ -17,6 +17,7 @@ const ALL_NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; 
 const SETTINGS_CHILDREN: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
   { to: "/settings", label: "General", icon: SlidersHorizontal, roles: ["admin", "rn", "caregiver", "patient"] },
   { to: "/staff", label: "Staff", icon: UserCog, roles: ["admin"] },
+  { to: "/applicants", label: "Applicants", icon: UserPlus, roles: ["admin", "rn"] },
 ];
 
 const ROLE_LABEL: Record<AppRole, string> = {
