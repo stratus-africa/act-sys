@@ -20,7 +20,7 @@ type Profile = {
   hr_notes: string | null;
 };
 type RoleName = "admin" | "rn" | "caregiver" | "patient";
-type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null };
+type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null; file_path: string | null };
 
 const PERMISSION_KEYS: { key: string; label: string }[] = [
   { key: "manage_staff", label: "Manage staff & invitations" },
