@@ -92,6 +92,29 @@ function ApplicantDetailPage() {
     toast.success("Status updated");
   };
 
+  const [stageNote, setStageNote] = useState("");
+  const [advancing, setAdvancing] = useState(false);
+  const completedKinds = new Set(docs.filter((d) => d.status === "completed").map((d) => d.kind));
+  const currentIdx = STAGE_FLOW.indexOf(a?.status as any);
+  const nextStage = currentIdx >= 0 && currentIdx < STAGE_FLOW.length - 1 ? STAGE_FLOW[currentIdx + 1] : null;
+  const missingForNext = nextStage ? (STAGE_REQUIRED_DOCS[nextStage] ?? []).filter((k) => !completedKinds.has(k)) : [];
+
+  const advanceStage = async (toStatus: string, note: string) => {
+    if (!a) return;
+    const missing = (STAGE_REQUIRED_DOCS[toStatus] ?? []).filter((k) => !completedKinds.has(k));
+    if (missing.length > 0) return toast.error(`Cannot advance: missing ${missing.join(", ")}`);
+    if (!note.trim()) return toast.error("A transition note is required");
+    setAdvancing(true);
+    const entry: StageEntry = { from: a.status, to: toStatus, note: note.trim(), at: new Date().toISOString(), by: user?.id ?? null };
+    const next = [entry, ...((a.stage_history ?? []) as StageEntry[])];
+    const { error } = await (supabase.from("applicants" as any) as any).update({ status: toStatus, stage_history: next }).eq("id", applicantId);
+    setAdvancing(false);
+    if (error) return toast.error(error.message);
+    setStageNote("");
+    toast.success(`Moved to ${toStatus}`);
+    load();
+  };
+
   const upsertDoc = async (kind: string, patch: Partial<Doc>) => {
     const existing = docs.find((d) => d.kind === kind);
     if (existing) {
