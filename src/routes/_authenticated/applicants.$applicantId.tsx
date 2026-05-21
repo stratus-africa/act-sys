@@ -94,8 +94,10 @@ function ApplicantDetailPage() {
   };
 
   const uploadDocFile = async (kind: string, file: File) => {
+    const err = validateUpload(file);
+    if (err) return toast.error(err);
     const path = `applicants/${applicantId}/${kind}-${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, file);
+    const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, file, { contentType: file.type || undefined });
     if (upErr) return toast.error(upErr.message);
     await upsertDoc(kind, { file_path: path, status: "completed", signed_at: new Date().toISOString() } as any);
     toast.success("File uploaded");
