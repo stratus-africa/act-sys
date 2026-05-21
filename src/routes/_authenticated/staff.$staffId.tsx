@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { Switch } from "@/components/ui/switch";
 import { CREDENTIAL_KINDS } from "@/lib/hr-constants";
+import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
 import { toast } from "sonner";
 import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X, Plus, AlertTriangle, Trash2 } from "lucide-react";
 
@@ -278,13 +279,15 @@ function StaffProfilePage() {
                               window.open(data.signedUrl, "_blank");
                             }} className="text-xs underline">View file</button>
                           ) : <span className="text-[10px] text-muted-foreground">no file</span>}
-                          <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-2 py-1 border border-border hover:border-primary">
+                          <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-2 py-1 border border-border hover:border-primary" title={`PDF / image / DOC · max ${MAX_UPLOAD_MB} MB`}>
                             <Plus className="size-3" /> {c.file_path ? "Replace" : "Upload"}
-                            <input type="file" className="hidden" onChange={async (e) => {
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.doc,.docx,image/*,application/pdf" className="hidden" onChange={async (e) => {
                               const f = e.target.files?.[0]; if (!f) return;
+                              const err = validateUpload(f);
+                              if (err) { toast.error(err); e.currentTarget.value = ""; return; }
                               const path = `staff/${staffId}/${c.id}-${Date.now()}-${f.name}`;
-                              const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, f, { upsert: true });
-                              if (upErr) return toast.error(upErr.message);
+                              const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, f, { upsert: true, contentType: f.type || undefined });
+                              if (upErr) { toast.error(upErr.message); e.currentTarget.value = ""; return; }
                               const { error } = await (supabase.from("staff_credentials" as any) as any).update({ file_path: path }).eq("id", c.id);
                               if (error) toast.error(error.message); else { toast.success("Uploaded"); load(); }
                               e.currentTarget.value = "";

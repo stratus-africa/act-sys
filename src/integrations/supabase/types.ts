@@ -134,6 +134,7 @@ export type Database = {
           rejection_reason: string | null
           source: string | null
           ssn_last4: string | null
+          stage_history: Json
           state: string | null
           status: string
           updated_at: string
@@ -165,6 +166,7 @@ export type Database = {
           rejection_reason?: string | null
           source?: string | null
           ssn_last4?: string | null
+          stage_history?: Json
           state?: string | null
           status?: string
           updated_at?: string
@@ -196,6 +198,7 @@ export type Database = {
           rejection_reason?: string | null
           source?: string | null
           ssn_last4?: string | null
+          stage_history?: Json
           state?: string | null
           status?: string
           updated_at?: string

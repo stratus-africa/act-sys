@@ -5,11 +5,13 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES, ONBOARDING_DOCS, PCA_SKILLS, skillKey } from "@/lib/hr-constants";
+import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
 import { toast } from "sonner";
-import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/applicants/$applicantId")({ component: ApplicantDetailPage });
 
+type StageEntry = { from: string; to: string; note: string | null; at: string; by: string | null };
 type Applicant = {
   id: string;
   first_name: string; last_name: string;
@@ -22,6 +24,16 @@ type Applicant = {
   pay_agreement: string | null; interviewer: string | null;
   source: string | null; notes: string | null;
   rejection_reason: string | null; hired_user_id: string | null; hired_at: string | null;
+  stage_history: StageEntry[] | null;
+};
+
+const STAGE_FLOW = ["applied", "screening", "background", "interview", "offer", "hired"] as const;
+const STAGE_REQUIRED_DOCS: Record<string, string[]> = {
+  screening: ["application"],
+  background: ["criminal_background", "background_check"],
+  interview: [],
+  offer: ["ethics", "confidentiality", "hepatitis_b", "tb_review"],
+  hired: ["w4", "health_certificate", "training_ack"],
 };
 
 type Doc = { id: string; kind: string; status: string; data: any; file_path: string | null; signed_at: string | null; updated_at: string };
@@ -41,6 +53,8 @@ function ApplicantDetailPage() {
   const [saving, setSaving] = useState(false);
   const [hireEmail, setHireEmail] = useState("");
   const [hiring, setHiring] = useState(false);
+  const [stageNote, setStageNote] = useState("");
+  const [advancing, setAdvancing] = useState(false);
 
   const load = useCallback(async () => {
     const [{ data: ap }, { data: ds }, { data: sk }] = await Promise.all([
@@ -80,6 +94,27 @@ function ApplicantDetailPage() {
     toast.success("Status updated");
   };
 
+  const completedKinds = new Set(docs.filter((d) => d.status === "completed").map((d) => d.kind));
+  const currentIdx = STAGE_FLOW.indexOf(a.status as any);
+  const nextStage = currentIdx >= 0 && currentIdx < STAGE_FLOW.length - 1 ? STAGE_FLOW[currentIdx + 1] : null;
+  const missingForNext = nextStage ? (STAGE_REQUIRED_DOCS[nextStage] ?? []).filter((k) => !completedKinds.has(k)) : [];
+
+  const advanceStage = async (toStatus: string, note: string) => {
+    if (!a) return;
+    const missing = (STAGE_REQUIRED_DOCS[toStatus] ?? []).filter((k) => !completedKinds.has(k));
+    if (missing.length > 0) return toast.error(`Cannot advance: missing ${missing.join(", ")}`);
+    if (!note.trim()) return toast.error("A transition note is required");
+    setAdvancing(true);
+    const entry: StageEntry = { from: a.status, to: toStatus, note: note.trim(), at: new Date().toISOString(), by: user?.id ?? null };
+    const next = [entry, ...((a.stage_history ?? []) as StageEntry[])];
+    const { error } = await (supabase.from("applicants" as any) as any).update({ status: toStatus, stage_history: next }).eq("id", applicantId);
+    setAdvancing(false);
+    if (error) return toast.error(error.message);
+    setStageNote("");
+    toast.success(`Moved to ${toStatus}`);
+    load();
+  };
+
   const upsertDoc = async (kind: string, patch: Partial<Doc>) => {
     const existing = docs.find((d) => d.kind === kind);
     if (existing) {
@@ -93,8 +128,10 @@ function ApplicantDetailPage() {
   };
 
   const uploadDocFile = async (kind: string, file: File) => {
+    const err = validateUpload(file);
+    if (err) return toast.error(err);
     const path = `applicants/${applicantId}/${kind}-${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, file);
+    const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, file, { contentType: file.type || undefined });
     if (upErr) return toast.error(upErr.message);
     await upsertDoc(kind, { file_path: path, status: "completed", signed_at: new Date().toISOString() } as any);
     toast.success("File uploaded");
@@ -162,6 +199,64 @@ function ApplicantDetailPage() {
         <Link to="/applicants" className="inline-flex items-center gap-1 text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-3" /> Back to applicants
         </Link>
+
+        <div className="border border-border bg-card p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest">Onboarding Pipeline</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Move the applicant through each stage. A transition note is required and missing documents will block progress.</p>
+            </div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">Current: <span className="text-foreground font-bold">{a.status}</span></div>
+          </div>
+          <ol className="flex flex-wrap items-center gap-1">
+            {STAGE_FLOW.map((s, i) => {
+              const isDone = i < currentIdx || a.status === "hired";
+              const isCurrent = i === currentIdx;
+              return (
+                <li key={s} className="flex items-center gap-1">
+                  <span className={"px-3 py-1 text-[10px] font-bold uppercase tracking-widest border " + (isCurrent ? "bg-primary text-primary-foreground border-primary" : isDone ? "border-primary/40 text-primary" : "border-border text-muted-foreground")}>{s}</span>
+                  {i < STAGE_FLOW.length - 1 && <span className="text-muted-foreground">→</span>}
+                </li>
+              );
+            })}
+          </ol>
+          {nextStage && a.status !== "rejected" && a.status !== "withdrawn" && (
+            <div className="grid md:grid-cols-[1fr_auto] gap-3 items-end pt-3 border-t border-border">
+              <div>
+                <FieldLabel>Transition note (required) — advancing to <span className="text-foreground">{nextStage}</span></FieldLabel>
+                <TextArea rows={2} value={stageNote} onChange={(e) => setStageNote(e.target.value)} placeholder={`Why is the applicant moving to ${nextStage}?`} />
+                {missingForNext.length > 0 && (
+                  <div className="text-[11px] text-destructive mt-1.5 flex items-start gap-1">
+                    <AlertTriangle className="size-3 mt-0.5" /> Missing required docs for <strong>{nextStage}</strong>: {missingForNext.map((k) => ONBOARDING_DOCS.find((d) => d.kind === k)?.label ?? k).join(", ")}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => advanceStage(nextStage, stageNote)}
+                disabled={advancing || missingForNext.length > 0 || !stageNote.trim()}
+                className="bg-primary text-primary-foreground px-5 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+              >
+                {advancing ? "Advancing…" : `Advance → ${nextStage}`}
+              </button>
+            </div>
+          )}
+          {(a.stage_history ?? []).length > 0 && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground font-mono uppercase tracking-widest text-[10px]">Stage History ({(a.stage_history ?? []).length})</summary>
+              <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
+                {(a.stage_history ?? []).map((h, i) => (
+                  <li key={i} className="text-[11px] flex flex-wrap gap-x-2">
+                    <span className="font-mono text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
+                    <span><strong>{h.from}</strong> → <strong>{h.to}</strong></span>
+                    {h.note && <span className="text-muted-foreground italic">"{h.note}"</span>}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+
+
 
         <div className="flex gap-1 border-b border-border">
           {[
