@@ -200,6 +200,64 @@ function ApplicantDetailPage() {
           <ArrowLeft className="size-3" /> Back to applicants
         </Link>
 
+        <div className="border border-border bg-card p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest">Onboarding Pipeline</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Move the applicant through each stage. A transition note is required and missing documents will block progress.</p>
+            </div>
+            <div className="text-[10px] font-mono uppercase text-muted-foreground">Current: <span className="text-foreground font-bold">{a.status}</span></div>
+          </div>
+          <ol className="flex flex-wrap items-center gap-1">
+            {STAGE_FLOW.map((s, i) => {
+              const isDone = i < currentIdx || a.status === "hired";
+              const isCurrent = i === currentIdx;
+              return (
+                <li key={s} className="flex items-center gap-1">
+                  <span className={"px-3 py-1 text-[10px] font-bold uppercase tracking-widest border " + (isCurrent ? "bg-primary text-primary-foreground border-primary" : isDone ? "border-primary/40 text-primary" : "border-border text-muted-foreground")}>{s}</span>
+                  {i < STAGE_FLOW.length - 1 && <span className="text-muted-foreground">→</span>}
+                </li>
+              );
+            })}
+          </ol>
+          {nextStage && a.status !== "rejected" && a.status !== "withdrawn" && (
+            <div className="grid md:grid-cols-[1fr_auto] gap-3 items-end pt-3 border-t border-border">
+              <div>
+                <FieldLabel>Transition note (required) — advancing to <span className="text-foreground">{nextStage}</span></FieldLabel>
+                <TextArea rows={2} value={stageNote} onChange={(e) => setStageNote(e.target.value)} placeholder={`Why is the applicant moving to ${nextStage}?`} />
+                {missingForNext.length > 0 && (
+                  <div className="text-[11px] text-destructive mt-1.5 flex items-start gap-1">
+                    <AlertTriangle className="size-3 mt-0.5" /> Missing required docs for <strong>{nextStage}</strong>: {missingForNext.map((k) => ONBOARDING_DOCS.find((d) => d.kind === k)?.label ?? k).join(", ")}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => advanceStage(nextStage, stageNote)}
+                disabled={advancing || missingForNext.length > 0 || !stageNote.trim()}
+                className="bg-primary text-primary-foreground px-5 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+              >
+                {advancing ? "Advancing…" : `Advance → ${nextStage}`}
+              </button>
+            </div>
+          )}
+          {(a.stage_history ?? []).length > 0 && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground font-mono uppercase tracking-widest text-[10px]">Stage History ({(a.stage_history ?? []).length})</summary>
+              <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
+                {(a.stage_history ?? []).map((h, i) => (
+                  <li key={i} className="text-[11px] flex flex-wrap gap-x-2">
+                    <span className="font-mono text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
+                    <span><strong>{h.from}</strong> → <strong>{h.to}</strong></span>
+                    {h.note && <span className="text-muted-foreground italic">"{h.note}"</span>}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+
+
+
         <div className="flex gap-1 border-b border-border">
           {[
             { id: "profile", label: "Profile" },
