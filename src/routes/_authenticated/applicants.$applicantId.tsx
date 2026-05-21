@@ -11,6 +11,7 @@ import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download } from 
 
 export const Route = createFileRoute("/_authenticated/applicants/$applicantId")({ component: ApplicantDetailPage });
 
+type StageEntry = { from: string; to: string; note: string | null; at: string; by: string | null };
 type Applicant = {
   id: string;
   first_name: string; last_name: string;
@@ -23,6 +24,16 @@ type Applicant = {
   pay_agreement: string | null; interviewer: string | null;
   source: string | null; notes: string | null;
   rejection_reason: string | null; hired_user_id: string | null; hired_at: string | null;
+  stage_history: StageEntry[] | null;
+};
+
+const STAGE_FLOW = ["applied", "screening", "background", "interview", "offer", "hired"] as const;
+const STAGE_REQUIRED_DOCS: Record<string, string[]> = {
+  screening: ["application"],
+  background: ["criminal_background", "background_check"],
+  interview: [],
+  offer: ["ethics", "confidentiality", "hepatitis_b", "tb_review"],
+  hired: ["w4", "health_certificate", "training_ack"],
 };
 
 type Doc = { id: string; kind: string; status: string; data: any; file_path: string | null; signed_at: string | null; updated_at: string };
