@@ -5,6 +5,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES, ONBOARDING_DOCS, PCA_SKILLS, skillKey } from "@/lib/hr-constants";
+import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
 import { toast } from "sonner";
 import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download } from "lucide-react";
 
