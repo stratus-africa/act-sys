@@ -7,7 +7,7 @@ import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/F
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES, ONBOARDING_DOCS, PCA_SKILLS, skillKey } from "@/lib/hr-constants";
 import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
 import { toast } from "sonner";
-import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/applicants/$applicantId")({ component: ApplicantDetailPage });
 
