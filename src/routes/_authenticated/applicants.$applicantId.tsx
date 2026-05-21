@@ -53,6 +53,8 @@ function ApplicantDetailPage() {
   const [saving, setSaving] = useState(false);
   const [hireEmail, setHireEmail] = useState("");
   const [hiring, setHiring] = useState(false);
+  const [stageNote, setStageNote] = useState("");
+  const [advancing, setAdvancing] = useState(false);
 
   const load = useCallback(async () => {
     const [{ data: ap }, { data: ds }, { data: sk }] = await Promise.all([
@@ -92,9 +94,12 @@ function ApplicantDetailPage() {
     toast.success("Status updated");
   };
 
-  const [stageNote, setStageNote] = useState("");
-  const [advancing, setAdvancing] = useState(false);
+  };
+
   const completedKinds = new Set(docs.filter((d) => d.status === "completed").map((d) => d.kind));
+  const currentIdx = STAGE_FLOW.indexOf(a.status as any);
+  const nextStage = currentIdx >= 0 && currentIdx < STAGE_FLOW.length - 1 ? STAGE_FLOW[currentIdx + 1] : null;
+  const missingForNext = nextStage ? (STAGE_REQUIRED_DOCS[nextStage] ?? []).filter((k) => !completedKinds.has(k)) : [];
   const currentIdx = STAGE_FLOW.indexOf(a?.status as any);
   const nextStage = currentIdx >= 0 && currentIdx < STAGE_FLOW.length - 1 ? STAGE_FLOW[currentIdx + 1] : null;
   const missingForNext = nextStage ? (STAGE_REQUIRED_DOCS[nextStage] ?? []).filter((k) => !completedKinds.has(k)) : [];
