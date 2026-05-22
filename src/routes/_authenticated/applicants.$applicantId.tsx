@@ -240,20 +240,7 @@ function ApplicantDetailPage() {
               </button>
             </div>
           )}
-          {(a.stage_history ?? []).length > 0 && (
-            <details className="text-xs">
-              <summary className="cursor-pointer text-muted-foreground font-mono uppercase tracking-widest text-[10px]">Stage History ({(a.stage_history ?? []).length})</summary>
-              <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
-                {(a.stage_history ?? []).map((h, i) => (
-                  <li key={i} className="text-[11px] flex flex-wrap gap-x-2">
-                    <span className="font-mono text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
-                    <span><strong>{h.from}</strong> → <strong>{h.to}</strong></span>
-                    {h.note && <span className="text-muted-foreground italic">"{h.note}"</span>}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
+          <StageHistoryViewer history={(a.stage_history ?? []) as StageEntry[]} />
         </div>
 
 
