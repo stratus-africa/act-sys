@@ -11,13 +11,13 @@ const ALL_NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; 
   { to: "/assessments", label: "Assessments", icon: Stethoscope, roles: ["admin", "rn", "caregiver"] },
   { to: "/visits", label: "Visits & Scheduling", icon: CalendarDays, roles: ["admin", "rn", "caregiver"] },
   { to: "/timesheets", label: "Timesheets", icon: ClipboardList, roles: ["admin", "rn", "caregiver"] },
+  { to: "/applicants", label: "HR · Applicants", icon: UserPlus, roles: ["admin", "rn"] },
   { to: "/reports", label: "Reports", icon: FileText, roles: ["admin", "rn"] },
 ];
 
 const SETTINGS_CHILDREN: Array<{ to: string; label: string; icon: typeof LayoutDashboard; roles: AppRole[] }> = [
   { to: "/settings", label: "General", icon: SlidersHorizontal, roles: ["admin", "rn", "caregiver", "patient"] },
   { to: "/staff", label: "Staff", icon: UserCog, roles: ["admin"] },
-  { to: "/applicants", label: "Applicants", icon: UserPlus, roles: ["admin", "rn"] },
 ];
 
 const ROLE_LABEL: Record<AppRole, string> = {
