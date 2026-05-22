@@ -436,3 +436,54 @@ function ApplicantDetailPage() {
     </>
   );
 }
+
+function StageHistoryViewer({ history }: { history: StageEntry[] }) {
+  const [names, setNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const ids = Array.from(new Set(history.map((h) => h.by).filter(Boolean))) as string[];
+    if (!ids.length) return;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { map[p.id] = p.full_name || p.email || p.id.slice(0, 8); });
+      setNames(map);
+    })();
+  }, [history]);
+
+  return (
+    <div className="border-t border-border pt-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Stage History</h4>
+        <span className="text-[10px] font-mono text-muted-foreground">{history.length} {history.length === 1 ? "transition" : "transitions"}</span>
+      </div>
+      {history.length === 0 ? (
+        <div className="text-[11px] text-muted-foreground italic py-3 text-center border border-dashed border-border">No stage transitions yet.</div>
+      ) : (
+        <div className="overflow-x-auto border border-border">
+          <table className="w-full text-xs">
+            <thead className="bg-muted text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 text-left">When</th>
+                <th className="px-3 py-2 text-left">From</th>
+                <th className="px-3 py-2 text-left">To</th>
+                <th className="px-3 py-2 text-left">Changed By</th>
+                <th className="px-3 py-2 text-left">Note</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {history.map((h, i) => (
+                <tr key={i} className="hover:bg-muted/30 align-top">
+                  <td className="px-3 py-2 font-mono text-[11px] whitespace-nowrap text-muted-foreground">{new Date(h.at).toLocaleString()}</td>
+                  <td className="px-3 py-2"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border border-border px-1.5 py-0.5">{h.from}</span></td>
+                  <td className="px-3 py-2"><span className="text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/40 bg-primary/5 px-1.5 py-0.5">{h.to}</span></td>
+                  <td className="px-3 py-2 text-[11px]">{h.by ? (names[h.by] ?? <span className="text-muted-foreground">…</span>) : <span className="text-muted-foreground italic">system</span>}</td>
+                  <td className="px-3 py-2 text-[11px] text-muted-foreground italic">{h.note || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
