@@ -271,6 +271,8 @@ function Dashboard() {
           </section>
         </div>
 
+        {(hasRole("admin") || hasRole("rn")) && <HrPipelineWidget />}
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickLink to="/patients" icon={Users} label="Patients" />
           <QuickLink to="/visits" icon={CalendarDays} label="Visits" />
