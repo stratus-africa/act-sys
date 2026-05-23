@@ -93,6 +93,40 @@ function StaffProfilePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!profile?.photo_url) { setPhotoSignedUrl(null); return; }
+      const { data } = await supabase.storage.from("hr-documents").createSignedUrl(profile.photo_url, 3600);
+      if (!cancelled) setPhotoSignedUrl(data?.signedUrl ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [profile?.photo_url]);
+
+  const uploadPhoto = async (file: File) => {
+    const err = validateUpload(file, { allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/heic"] });
+    if (err) return toast.error(err);
+    setPhotoUploading(true);
+    const path = `staff/${staffId}/photo-${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, file, { upsert: true, contentType: file.type || undefined });
+    if (upErr) { setPhotoUploading(false); return toast.error(upErr.message); }
+    const { error } = await (supabase.from("profiles") as any).update({ photo_url: path }).eq("id", staffId);
+    setPhotoUploading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Photo updated");
+    load();
+  };
+
+  const removePhoto = async () => {
+    if (!profile?.photo_url) return;
+    if (!confirm("Remove photo?")) return;
+    await supabase.storage.from("hr-documents").remove([profile.photo_url]);
+    await (supabase.from("profiles") as any).update({ photo_url: null }).eq("id", staffId);
+    toast.success("Photo removed");
+    load();
+  };
+
+
   const assignedIds = useMemo(() => new Set(assignments.map((a) => a.patient_id)), [assignments]);
   const unassigned = useMemo(() => allPatients.filter((p) => !assignedIds.has(p.id)), [allPatients, assignedIds]);
 
