@@ -6,9 +6,69 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES } from "@/lib/hr-constants";
 import { toast } from "sonner";
-import { Plus, Search, UserPlus } from "lucide-react";
+import { Plus, Search, UserPlus, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/applicants/")({ component: ApplicantsPage });
+
+const HR_STAGES = ["applied", "screening", "background", "interview", "offer", "hired"] as const;
+
+function HrPipelineWidget() {
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+  const [hired30, setHired30] = useState(0);
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const [{ data: rows }, { count }] = await Promise.all([
+        (supabase.from("applicants" as any) as any).select("status"),
+        (supabase.from("applicants" as any) as any).select("id", { count: "exact", head: true }).eq("status", "hired").gte("hired_at", since),
+      ]);
+      const c: Record<string, number> = {};
+      (rows ?? []).forEach((r: any) => { c[r.status] = (c[r.status] ?? 0) + 1; });
+      setCounts(c);
+      setTotal((rows ?? []).length);
+      setHired30(count ?? 0);
+    })();
+  }, []);
+
+  const max = Math.max(1, ...HR_STAGES.map((s) => counts?.[s] ?? 0));
+  const activeTotal = HR_STAGES.slice(0, -1).reduce((sum, s) => sum + (counts?.[s] ?? 0), 0);
+  const conversionRate = activeTotal + hired30 > 0 ? Math.round((hired30 / (activeTotal + hired30)) * 100) : 0;
+
+  return (
+    <section className="border border-border bg-card">
+      <div className="px-6 py-4 border-b border-border flex justify-between items-center">
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-widest">HR Pipeline</h3>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">Applicants by stage · Hires last 30 days</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
+        <div className="bg-card p-5"><div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-mono">Total Applicants</div><div className="text-3xl font-extrabold mt-3 tabular-nums">{counts == null ? "—" : total}</div></div>
+        <div className="bg-card p-5"><div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-mono">In Pipeline</div><div className="text-3xl font-extrabold mt-3 tabular-nums">{counts == null ? "—" : activeTotal}</div></div>
+        <div className="bg-card p-5"><div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-mono">Hired · 30d</div><div className="text-3xl font-extrabold mt-3 tabular-nums text-primary">{counts == null ? "—" : hired30}</div></div>
+        <div className="bg-card p-5"><div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-mono">Conversion</div><div className="text-3xl font-extrabold mt-3 tabular-nums">{counts == null ? "—" : `${conversionRate}%`}</div></div>
+      </div>
+      <div className="px-6 py-5 space-y-2.5">
+        {HR_STAGES.map((s) => {
+          const n = counts?.[s] ?? 0;
+          const pct = (n / max) * 100;
+          return (
+            <div key={s} className="grid grid-cols-[110px_1fr_40px] items-center gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{s}</span>
+              <div className="h-2 bg-muted relative overflow-hidden">
+                <div className={"absolute inset-y-0 left-0 transition-all " + (s === "hired" ? "bg-primary" : "bg-foreground/70")} style={{ width: pct + "%" }} />
+              </div>
+              <span className="text-sm font-extrabold tabular-nums text-right">{counts == null ? "—" : n}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 
 type Applicant = {
   id: string;
