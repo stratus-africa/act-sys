@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CREDENTIAL_KINDS } from "@/lib/hr-constants";
 import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X, Plus, AlertTriangle, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, IdCard, ShieldCheck, ClipboardList, Users as UsersIcon, Stethoscope, Lock, X, Plus, AlertTriangle, Trash2, Camera } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/$staffId")({ component: StaffProfilePage });
 
