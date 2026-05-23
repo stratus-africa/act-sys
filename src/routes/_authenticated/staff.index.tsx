@@ -7,7 +7,7 @@ import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection
 import { toast } from "sonner";
 import { Mail, Trash2, UserPlus, Copy, Check } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/staff")({ component: StaffPage });
+export const Route = createFileRoute("/_authenticated/staff/")({ component: StaffPage });
 
 type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean };
 type Role = { id: string; user_id: string; role: "admin" | "rn" | "caregiver" | "patient" };
