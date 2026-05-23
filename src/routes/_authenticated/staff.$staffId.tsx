@@ -534,6 +534,61 @@ function StaffProfilePage() {
 
           <div className="space-y-6">
             <div className="border border-border p-5 bg-card space-y-3">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Photo</div>
+              <div className="relative aspect-square w-full bg-muted overflow-hidden flex items-center justify-center">
+                {photoSignedUrl ? (
+                  <img src={photoSignedUrl} alt={profile.full_name ?? "Staff photo"} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center text-muted-foreground gap-2">
+                    <Camera className="size-10" strokeWidth={1.5} />
+                    <span className="text-[10px] font-mono uppercase tracking-widest">No photo</span>
+                  </div>
+                )}
+              </div>
+              {canEdit && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoUploading}
+                    className="flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-widest bg-primary text-primary-foreground inline-flex items-center justify-center gap-1 disabled:opacity-40"
+                  >
+                    <Camera className="size-3" /> {photoUploading ? "Uploading…" : profile.photo_url ? "Replace" : "Upload"}
+                  </button>
+                  {profile.photo_url && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest border border-border text-muted-foreground hover:text-destructive hover:border-destructive inline-flex items-center gap-1"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+                  )}
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadPhoto(f);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="border border-border p-5 bg-card space-y-3">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1"><ClipboardList className="size-3" /> Activity Summary</div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div><div className="text-2xl font-extrabold">{visits.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Visits</div></div>
+                <div><div className="text-2xl font-extrabold">{timesheets.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Timesheets</div></div>
+                <div><div className="text-2xl font-extrabold">{cgAssessments.length + rnAssessments.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Assessments</div></div>
+              </div>
+            </div>
+
+            <div className="border border-border p-5 bg-card space-y-3">
               <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Status</div>
               <div className={"text-xs font-bold uppercase " + (profile.active ? "text-primary" : "text-muted-foreground")}>
                 {profile.active ? "Active" : "Inactive"}
@@ -575,16 +630,8 @@ function StaffProfilePage() {
                 </ul>
               )}
             </div>
-
-            <div className="border border-border p-5 bg-card space-y-3">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1"><ClipboardList className="size-3" /> Activity Summary</div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div><div className="text-2xl font-extrabold">{visits.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Visits</div></div>
-                <div><div className="text-2xl font-extrabold">{timesheets.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Timesheets</div></div>
-                <div><div className="text-2xl font-extrabold">{cgAssessments.length + rnAssessments.length}</div><div className="text-[9px] font-mono uppercase text-muted-foreground">Assessments</div></div>
-              </div>
-            </div>
           </div>
+
         </div>
       </div>
     </>
