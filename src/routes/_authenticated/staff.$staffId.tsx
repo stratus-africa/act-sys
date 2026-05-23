@@ -214,144 +214,193 @@ function StaffProfilePage() {
 
         <div className="grid xl:grid-cols-[1fr_340px] gap-8">
           <div className="space-y-6 min-w-0">
-            <FormSection title="Identity" description={canEdit ? "Update profile details." : "Read-only view."}>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div><FieldLabel>Full Name</FieldLabel><TextInput value={edit.full_name ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, full_name: e.target.value }))} /></div>
-                <div><FieldLabel>Email</FieldLabel><TextInput value={profile.email ?? ""} disabled /></div>
-                <div><FieldLabel>Phone</FieldLabel><TextInput value={edit.phone ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, phone: e.target.value }))} /></div>
-                <div><FieldLabel>License Number</FieldLabel><TextInput value={edit.license_no ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, license_no: e.target.value }))} /></div>
-              </div>
-              {canEdit && (
-                <button type="button" onClick={save} disabled={saving} className="mt-4 px-5 py-2 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground disabled:opacity-40">
-                  {saving ? "Saving…" : "Save Profile"}
-                </button>
-              )}
-            </FormSection>
+            <Tabs defaultValue="identity" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="identity">Identity</TabsTrigger>
+                <TabsTrigger value="hr">HR Information</TabsTrigger>
+                <TabsTrigger value="credentials">Credentials</TabsTrigger>
+                <TabsTrigger value="permissions">Permissions</TabsTrigger>
+              </TabsList>
 
-            {isAdmin && (
-              <FormSection title="HR Information" description="Address, hire details, emergency contact.">
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div className="md:col-span-2"><FieldLabel>Address</FieldLabel><TextInput value={edit.address ?? ""} onChange={(e) => setEdit((s) => ({ ...s, address: e.target.value }))} /></div>
-                  <div><FieldLabel>City</FieldLabel><TextInput value={edit.city ?? ""} onChange={(e) => setEdit((s) => ({ ...s, city: e.target.value }))} /></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><FieldLabel>State</FieldLabel><TextInput value={edit.state ?? ""} onChange={(e) => setEdit((s) => ({ ...s, state: e.target.value }))} /></div>
-                    <div><FieldLabel>ZIP</FieldLabel><TextInput value={edit.zip ?? ""} onChange={(e) => setEdit((s) => ({ ...s, zip: e.target.value }))} /></div>
+              <TabsContent value="identity" className="mt-4">
+                <FormSection title="Identity" description={canEdit ? "Update profile details." : "Read-only view."}>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div><FieldLabel>Full Name</FieldLabel><TextInput value={edit.full_name ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, full_name: e.target.value }))} /></div>
+                    <div><FieldLabel>Email</FieldLabel><TextInput value={profile.email ?? ""} disabled /></div>
+                    <div><FieldLabel>Phone</FieldLabel><TextInput value={edit.phone ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, phone: e.target.value }))} /></div>
+                    <div><FieldLabel>License Number</FieldLabel><TextInput value={edit.license_no ?? ""} disabled={!canEdit} onChange={(e) => setEdit((s) => ({ ...s, license_no: e.target.value }))} /></div>
                   </div>
-                  <div><FieldLabel>Date of Birth</FieldLabel><TextInput type="date" value={edit.dob ?? ""} onChange={(e) => setEdit((s) => ({ ...s, dob: e.target.value }))} /></div>
-                  <div><FieldLabel>SSN (last 4)</FieldLabel><TextInput maxLength={4} value={edit.ssn_last4 ?? ""} onChange={(e) => setEdit((s) => ({ ...s, ssn_last4: e.target.value }))} /></div>
-                  <div><FieldLabel>Hire Date</FieldLabel><TextInput type="date" value={edit.hire_date ?? ""} onChange={(e) => setEdit((s) => ({ ...s, hire_date: e.target.value }))} /></div>
-                  <div><FieldLabel>Termination Date</FieldLabel><TextInput type="date" value={edit.termination_date ?? ""} onChange={(e) => setEdit((s) => ({ ...s, termination_date: e.target.value }))} /></div>
-                  <div><FieldLabel>Position</FieldLabel><TextInput value={edit.position ?? ""} onChange={(e) => setEdit((s) => ({ ...s, position: e.target.value }))} /></div>
-                  <div><FieldLabel>Department</FieldLabel><TextInput value={edit.department ?? ""} onChange={(e) => setEdit((s) => ({ ...s, department: e.target.value }))} /></div>
-                  <div>
-                    <FieldLabel>Pay Type</FieldLabel>
-                    <select value={edit.pay_type ?? ""} onChange={(e) => setEdit((s) => ({ ...s, pay_type: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-sm">
-                      <option value="">—</option><option value="hourly">Hourly</option><option value="salary">Salary</option><option value="contractor">Contractor</option>
-                    </select>
-                  </div>
-                  <div><FieldLabel>Pay Rate</FieldLabel><TextInput type="number" step="0.01" value={edit.pay_rate ?? ""} onChange={(e) => setEdit((s) => ({ ...s, pay_rate: e.target.value === "" ? null : Number(e.target.value) }))} /></div>
-                  <div><FieldLabel>Emergency Contact Name</FieldLabel><TextInput value={edit.emergency_contact_name ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_name: e.target.value }))} /></div>
-                  <div><FieldLabel>Emergency Contact Phone</FieldLabel><TextInput value={edit.emergency_contact_phone ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_phone: e.target.value }))} /></div>
-                  <div><FieldLabel>Relationship</FieldLabel><TextInput value={edit.emergency_contact_relation ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_relation: e.target.value }))} /></div>
-                  <div className="md:col-span-2"><FieldLabel>HR Notes</FieldLabel><TextArea rows={3} value={edit.hr_notes ?? ""} onChange={(e) => setEdit((s) => ({ ...s, hr_notes: e.target.value }))} /></div>
-                </div>
-              </FormSection>
-            )}
+                  {canEdit && (
+                    <button type="button" onClick={save} disabled={saving} className="mt-4 px-5 py-2 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground disabled:opacity-40">
+                      {saving ? "Saving…" : "Save Profile"}
+                    </button>
+                  )}
+                </FormSection>
+              </TabsContent>
 
-            {isAdmin && (
-              <FormSection title="Credentials & Expirations" description="Licenses, certifications, TB / Hep B status, etc.">
-                <div className="grid md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end pb-4 mb-4 border-b border-border">
-                  <div>
-                    <FieldLabel>Type</FieldLabel>
-                    <select value={newCred.kind} onChange={(e) => setNewCred((s) => ({ ...s, kind: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-sm">
-                      {CREDENTIAL_KINDS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                    </select>
-                  </div>
-                  <div><FieldLabel>Name / Description</FieldLabel><TextInput value={newCred.name ?? ""} onChange={(e) => setNewCred((s) => ({ ...s, name: e.target.value }))} /></div>
-                  <div><FieldLabel>Expires On</FieldLabel><TextInput type="date" value={newCred.expires_on ?? ""} onChange={(e) => setNewCred((s) => ({ ...s, expires_on: e.target.value }))} /></div>
-                  <button onClick={async () => {
-                    if (!newCred.name?.trim()) return toast.error("Name required");
-                    const { error } = await (supabase.from("staff_credentials" as any) as any).insert({ staff_id: staffId, kind: newCred.kind, name: newCred.name, expires_on: newCred.expires_on || null, created_by: user?.id });
-                    if (error) return toast.error(error.message);
-                    setNewCred({ kind: "license", name: "", status: "active" });
-                    load();
-                  }} className="bg-primary text-primary-foreground px-3 py-2 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1"><Plus className="size-3.5" /> Add</button>
-                </div>
-                {credentials.length === 0 ? <div className="text-xs text-muted-foreground">No credentials on file.</div> : (
-                  <ul className="divide-y divide-border">
-                    {credentials.map((c) => {
-                      const exp = c.expires_on ? new Date(c.expires_on) : null;
-                      const expiringSoon = exp && exp.getTime() - Date.now() < 30 * 86400000 && exp.getTime() > Date.now();
-                      const expired = exp && exp.getTime() < Date.now();
-                      const isExpiredStatus = c.status === "expired" || expired;
-                      return (
-                        <li key={c.id} className="py-3 grid md:grid-cols-[1fr_auto_auto_auto_auto] gap-2 items-center text-sm">
-                          <div className="min-w-0">
-                            <div className="font-semibold flex items-center gap-2 flex-wrap">
-                              <input
-                                defaultValue={c.name}
-                                onBlur={async (e) => {
-                                  if (e.target.value === c.name) return;
-                                  const { error } = await (supabase.from("staff_credentials" as any) as any).update({ name: e.target.value }).eq("id", c.id);
-                                  if (error) toast.error(error.message); else { toast.success("Updated"); load(); }
-                                }}
-                                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none px-1 py-0.5 min-w-40"
-                              />
-                              <span className="text-[10px] font-mono uppercase text-muted-foreground">{CREDENTIAL_KINDS.find((k) => k.value === c.kind)?.label ?? c.kind}</span>
-                              <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (isExpiredStatus ? "bg-destructive/10 text-destructive" : expiringSoon ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "bg-primary/10 text-primary")}>{isExpiredStatus ? "expired" : expiringSoon ? "expiring" : c.status}</span>
-                            </div>
-                            {c.expires_on && <div className={"text-[11px] font-mono mt-0.5 " + (isExpiredStatus ? "text-destructive" : expiringSoon ? "text-amber-600" : "text-muted-foreground")}>
-                              {isExpiredStatus ? "Expired" : expiringSoon ? "Expires soon" : "Expires"} {c.expires_on}
-                              {(isExpiredStatus || expiringSoon) && <AlertTriangle className="size-3 inline ml-1" />}
-                            </div>}
-                          </div>
-                          <input type="date" defaultValue={c.expires_on ?? ""} onBlur={async (e) => {
-                            const v = e.target.value || null;
-                            if (v === c.expires_on) return;
-                            const { error } = await (supabase.from("staff_credentials" as any) as any).update({ expires_on: v }).eq("id", c.id);
-                            if (error) toast.error(error.message); else load();
-                          }} className="px-2 py-1 border border-border bg-background text-xs" />
-                          {c.file_path ? (
-                            <button onClick={async () => {
-                              const { data, error } = await supabase.storage.from("hr-documents").createSignedUrl(c.file_path!, 60);
-                              if (error || !data) return toast.error(error?.message ?? "Failed");
-                              window.open(data.signedUrl, "_blank");
-                            }} className="text-xs underline">View file</button>
-                          ) : <span className="text-[10px] text-muted-foreground">no file</span>}
-                          <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-2 py-1 border border-border hover:border-primary" title={`PDF / image / DOC · max ${MAX_UPLOAD_MB} MB`}>
-                            <Plus className="size-3" /> {c.file_path ? "Replace" : "Upload"}
-                            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.doc,.docx,image/*,application/pdf" className="hidden" onChange={async (e) => {
-                              const f = e.target.files?.[0]; if (!f) return;
-                              const err = validateUpload(f);
-                              if (err) { toast.error(err); e.currentTarget.value = ""; return; }
-                              const path = `staff/${staffId}/${c.id}-${Date.now()}-${f.name}`;
-                              const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, f, { upsert: true, contentType: f.type || undefined });
-                              if (upErr) { toast.error(upErr.message); e.currentTarget.value = ""; return; }
-                              const { error } = await (supabase.from("staff_credentials" as any) as any).update({ file_path: path }).eq("id", c.id);
-                              if (error) toast.error(error.message); else { toast.success("Uploaded"); load(); }
-                              e.currentTarget.value = "";
-                            }} />
-                          </label>
-                          <div className="flex items-center gap-1">
-                            {!isExpiredStatus && (
-                              <button title="Mark expired" onClick={async () => {
-                                await (supabase.from("staff_credentials" as any) as any).update({ status: "expired" }).eq("id", c.id);
-                                load();
-                              }} className="text-xs px-2 py-1 text-amber-700 hover:bg-amber-500/10">Expire</button>
-                            )}
-                            <button onClick={async () => {
-                              if (!confirm("Delete this credential?")) return;
-                              await (supabase.from("staff_credentials" as any) as any).delete().eq("id", c.id);
-                              load();
-                            }} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="size-3.5" /></button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+              <TabsContent value="hr" className="mt-4">
+                {isAdmin ? (
+                  <FormSection title="HR Information" description="Address, hire details, emergency contact.">
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <div className="md:col-span-2"><FieldLabel>Address</FieldLabel><TextInput value={edit.address ?? ""} onChange={(e) => setEdit((s) => ({ ...s, address: e.target.value }))} /></div>
+                      <div><FieldLabel>City</FieldLabel><TextInput value={edit.city ?? ""} onChange={(e) => setEdit((s) => ({ ...s, city: e.target.value }))} /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><FieldLabel>State</FieldLabel><TextInput value={edit.state ?? ""} onChange={(e) => setEdit((s) => ({ ...s, state: e.target.value }))} /></div>
+                        <div><FieldLabel>ZIP</FieldLabel><TextInput value={edit.zip ?? ""} onChange={(e) => setEdit((s) => ({ ...s, zip: e.target.value }))} /></div>
+                      </div>
+                      <div><FieldLabel>Date of Birth</FieldLabel><TextInput type="date" value={edit.dob ?? ""} onChange={(e) => setEdit((s) => ({ ...s, dob: e.target.value }))} /></div>
+                      <div><FieldLabel>SSN (last 4)</FieldLabel><TextInput maxLength={4} value={edit.ssn_last4 ?? ""} onChange={(e) => setEdit((s) => ({ ...s, ssn_last4: e.target.value }))} /></div>
+                      <div><FieldLabel>Hire Date</FieldLabel><TextInput type="date" value={edit.hire_date ?? ""} onChange={(e) => setEdit((s) => ({ ...s, hire_date: e.target.value }))} /></div>
+                      <div><FieldLabel>Termination Date</FieldLabel><TextInput type="date" value={edit.termination_date ?? ""} onChange={(e) => setEdit((s) => ({ ...s, termination_date: e.target.value }))} /></div>
+                      <div><FieldLabel>Position</FieldLabel><TextInput value={edit.position ?? ""} onChange={(e) => setEdit((s) => ({ ...s, position: e.target.value }))} /></div>
+                      <div><FieldLabel>Department</FieldLabel><TextInput value={edit.department ?? ""} onChange={(e) => setEdit((s) => ({ ...s, department: e.target.value }))} /></div>
+                      <div>
+                        <FieldLabel>Pay Type</FieldLabel>
+                        <select value={edit.pay_type ?? ""} onChange={(e) => setEdit((s) => ({ ...s, pay_type: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-sm">
+                          <option value="">—</option><option value="hourly">Hourly</option><option value="salary">Salary</option><option value="contractor">Contractor</option>
+                        </select>
+                      </div>
+                      <div><FieldLabel>Pay Rate</FieldLabel><TextInput type="number" step="0.01" value={edit.pay_rate ?? ""} onChange={(e) => setEdit((s) => ({ ...s, pay_rate: e.target.value === "" ? null : Number(e.target.value) }))} /></div>
+                      <div><FieldLabel>Emergency Contact Name</FieldLabel><TextInput value={edit.emergency_contact_name ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_name: e.target.value }))} /></div>
+                      <div><FieldLabel>Emergency Contact Phone</FieldLabel><TextInput value={edit.emergency_contact_phone ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_phone: e.target.value }))} /></div>
+                      <div><FieldLabel>Relationship</FieldLabel><TextInput value={edit.emergency_contact_relation ?? ""} onChange={(e) => setEdit((s) => ({ ...s, emergency_contact_relation: e.target.value }))} /></div>
+                      <div className="md:col-span-2"><FieldLabel>HR Notes</FieldLabel><TextArea rows={3} value={edit.hr_notes ?? ""} onChange={(e) => setEdit((s) => ({ ...s, hr_notes: e.target.value }))} /></div>
+                    </div>
+                  </FormSection>
+                ) : (
+                  <div className="border border-border bg-card p-6 text-xs text-muted-foreground">Admin access required to view HR information.</div>
                 )}
-              </FormSection>
-            )}
+              </TabsContent>
+
+              <TabsContent value="credentials" className="mt-4">
+                {isAdmin ? (
+                  <FormSection title="Credentials & Expirations" description="Licenses, certifications, TB / Hep B status, etc.">
+                    <div className="grid md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end pb-4 mb-4 border-b border-border">
+                      <div>
+                        <FieldLabel>Type</FieldLabel>
+                        <select value={newCred.kind} onChange={(e) => setNewCred((s) => ({ ...s, kind: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-sm">
+                          {CREDENTIAL_KINDS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        </select>
+                      </div>
+                      <div><FieldLabel>Name / Description</FieldLabel><TextInput value={newCred.name ?? ""} onChange={(e) => setNewCred((s) => ({ ...s, name: e.target.value }))} /></div>
+                      <div><FieldLabel>Expires On</FieldLabel><TextInput type="date" value={newCred.expires_on ?? ""} onChange={(e) => setNewCred((s) => ({ ...s, expires_on: e.target.value }))} /></div>
+                      <button onClick={async () => {
+                        if (!newCred.name?.trim()) return toast.error("Name required");
+                        const { error } = await (supabase.from("staff_credentials" as any) as any).insert({ staff_id: staffId, kind: newCred.kind, name: newCred.name, expires_on: newCred.expires_on || null, created_by: user?.id });
+                        if (error) return toast.error(error.message);
+                        setNewCred({ kind: "license", name: "", status: "active" });
+                        load();
+                      }} className="bg-primary text-primary-foreground px-3 py-2 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1"><Plus className="size-3.5" /> Add</button>
+                    </div>
+                    {credentials.length === 0 ? <div className="text-xs text-muted-foreground">No credentials on file.</div> : (
+                      <ul className="divide-y divide-border">
+                        {credentials.map((c) => {
+                          const exp = c.expires_on ? new Date(c.expires_on) : null;
+                          const expiringSoon = exp && exp.getTime() - Date.now() < 30 * 86400000 && exp.getTime() > Date.now();
+                          const expired = exp && exp.getTime() < Date.now();
+                          const isExpiredStatus = c.status === "expired" || expired;
+                          return (
+                            <li key={c.id} className="py-3 grid md:grid-cols-[1fr_auto_auto_auto_auto] gap-2 items-center text-sm">
+                              <div className="min-w-0">
+                                <div className="font-semibold flex items-center gap-2 flex-wrap">
+                                  <input
+                                    defaultValue={c.name}
+                                    onBlur={async (e) => {
+                                      if (e.target.value === c.name) return;
+                                      const { error } = await (supabase.from("staff_credentials" as any) as any).update({ name: e.target.value }).eq("id", c.id);
+                                      if (error) toast.error(error.message); else { toast.success("Updated"); load(); }
+                                    }}
+                                    className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none px-1 py-0.5 min-w-40"
+                                  />
+                                  <span className="text-[10px] font-mono uppercase text-muted-foreground">{CREDENTIAL_KINDS.find((k) => k.value === c.kind)?.label ?? c.kind}</span>
+                                  <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (isExpiredStatus ? "bg-destructive/10 text-destructive" : expiringSoon ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "bg-primary/10 text-primary")}>{isExpiredStatus ? "expired" : expiringSoon ? "expiring" : c.status}</span>
+                                </div>
+                                {c.expires_on && <div className={"text-[11px] font-mono mt-0.5 " + (isExpiredStatus ? "text-destructive" : expiringSoon ? "text-amber-600" : "text-muted-foreground")}>
+                                  {isExpiredStatus ? "Expired" : expiringSoon ? "Expires soon" : "Expires"} {c.expires_on}
+                                  {(isExpiredStatus || expiringSoon) && <AlertTriangle className="size-3 inline ml-1" />}
+                                </div>}
+                              </div>
+                              <input type="date" defaultValue={c.expires_on ?? ""} onBlur={async (e) => {
+                                const v = e.target.value || null;
+                                if (v === c.expires_on) return;
+                                const { error } = await (supabase.from("staff_credentials" as any) as any).update({ expires_on: v }).eq("id", c.id);
+                                if (error) toast.error(error.message); else load();
+                              }} className="px-2 py-1 border border-border bg-background text-xs" />
+                              {c.file_path ? (
+                                <button onClick={async () => {
+                                  const { data, error } = await supabase.storage.from("hr-documents").createSignedUrl(c.file_path!, 60);
+                                  if (error || !data) return toast.error(error?.message ?? "Failed");
+                                  window.open(data.signedUrl, "_blank");
+                                }} className="text-xs underline">View file</button>
+                              ) : <span className="text-[10px] text-muted-foreground">no file</span>}
+                              <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-2 py-1 border border-border hover:border-primary" title={`PDF / image / DOC · max ${MAX_UPLOAD_MB} MB`}>
+                                <Plus className="size-3" /> {c.file_path ? "Replace" : "Upload"}
+                                <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.doc,.docx,image/*,application/pdf" className="hidden" onChange={async (e) => {
+                                  const f = e.target.files?.[0]; if (!f) return;
+                                  const err = validateUpload(f);
+                                  if (err) { toast.error(err); e.currentTarget.value = ""; return; }
+                                  const path = `staff/${staffId}/${c.id}-${Date.now()}-${f.name}`;
+                                  const { error: upErr } = await supabase.storage.from("hr-documents").upload(path, f, { upsert: true, contentType: f.type || undefined });
+                                  if (upErr) { toast.error(upErr.message); e.currentTarget.value = ""; return; }
+                                  const { error } = await (supabase.from("staff_credentials" as any) as any).update({ file_path: path }).eq("id", c.id);
+                                  if (error) toast.error(error.message); else { toast.success("Uploaded"); load(); }
+                                  e.currentTarget.value = "";
+                                }} />
+                              </label>
+                              <div className="flex items-center gap-1">
+                                {!isExpiredStatus && (
+                                  <button title="Mark expired" onClick={async () => {
+                                    await (supabase.from("staff_credentials" as any) as any).update({ status: "expired" }).eq("id", c.id);
+                                    load();
+                                  }} className="text-xs px-2 py-1 text-amber-700 hover:bg-amber-500/10">Expire</button>
+                                )}
+                                <button onClick={async () => {
+                                  if (!confirm("Delete this credential?")) return;
+                                  await (supabase.from("staff_credentials" as any) as any).delete().eq("id", c.id);
+                                  load();
+                                }} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="size-3.5" /></button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </FormSection>
+                ) : (
+                  <div className="border border-border bg-card p-6 text-xs text-muted-foreground">Admin access required to view credentials.</div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="permissions" className="mt-4">
+                <FormSection title="Role Permissions" description={isAdmin ? "Toggle capabilities for each role this staff member has. Changes apply globally to the role." : "Capabilities granted by this staff member's role(s)."}>
+                  {editableRoles.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No roles assigned.</div>
+                  ) : (
+                    <div className="space-y-6">
+                      {editableRoles.map((role) => {
+                        const perms = permsByRole[role] ?? {};
+                        return (
+                          <div key={role} className="border border-border">
+                            <div className="px-4 py-2 border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                              <ShieldCheck className="size-3 text-primary" /> {role}
+                              {!isAdmin && <Lock className="size-3 text-muted-foreground ml-auto" />}
+                            </div>
+                            <ul className="divide-y divide-border">
+                              {PERMISSION_KEYS.map((p) => (
+                                <li key={p.key} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                                  <span className={perms[p.key] ? "" : "text-muted-foreground"}>{p.label}</span>
+                                  <Switch checked={!!perms[p.key]} disabled={!isAdmin} onCheckedChange={(v) => togglePerm(role, p.key, !!v)} />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </FormSection>
+              </TabsContent>
+            </Tabs>
 
             {(roles.includes("caregiver") || roles.includes("rn")) && (
               <FormSection title="Patient Assignments" description={isAdmin ? "Manage which patients are assigned to this staff member." : "Patients currently assigned."}>
@@ -402,33 +451,6 @@ function StaffProfilePage() {
               </FormSection>
             )}
 
-            <FormSection title="Role Permissions" description={isAdmin ? "Toggle capabilities for each role this staff member has. Changes apply globally to the role." : "Capabilities granted by this staff member's role(s)."}>
-              {editableRoles.length === 0 ? (
-                <div className="text-xs text-muted-foreground">No roles assigned.</div>
-              ) : (
-                <div className="space-y-6">
-                  {editableRoles.map((role) => {
-                    const perms = permsByRole[role] ?? {};
-                    return (
-                      <div key={role} className="border border-border">
-                        <div className="px-4 py-2 border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                          <ShieldCheck className="size-3 text-primary" /> {role}
-                          {!isAdmin && <Lock className="size-3 text-muted-foreground ml-auto" />}
-                        </div>
-                        <ul className="divide-y divide-border">
-                          {PERMISSION_KEYS.map((p) => (
-                            <li key={p.key} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                              <span className={perms[p.key] ? "" : "text-muted-foreground"}>{p.label}</span>
-                              <Switch checked={!!perms[p.key]} disabled={!isAdmin} onCheckedChange={(v) => togglePerm(role, p.key, !!v)} />
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </FormSection>
 
             <FormSection title="Recent Visits">
               {visits.length === 0 ? <div className="text-xs text-muted-foreground">No visits.</div> : (
