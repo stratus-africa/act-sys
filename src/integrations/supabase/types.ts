@@ -1337,6 +1337,7 @@ export type Database = {
           pay_rate: number | null
           pay_type: string | null
           phone: string | null
+          photo_url: string | null
           position: string | null
           ssn_last4: string | null
           state: string | null
@@ -1366,6 +1367,7 @@ export type Database = {
           pay_rate?: number | null
           pay_type?: string | null
           phone?: string | null
+          photo_url?: string | null
           position?: string | null
           ssn_last4?: string | null
           state?: string | null
@@ -1395,6 +1397,7 @@ export type Database = {
           pay_rate?: number | null
           pay_type?: string | null
           phone?: string | null
+          photo_url?: string | null
           position?: string | null
           ssn_last4?: string | null
           state?: string | null
