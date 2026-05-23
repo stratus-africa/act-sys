@@ -8,7 +8,7 @@ import { APPLICANT_POSITIONS, APPLICANT_STATUSES } from "@/lib/hr-constants";
 import { toast } from "sonner";
 import { Plus, Search, UserPlus } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/applicants")({ component: ApplicantsPage });
+export const Route = createFileRoute("/_authenticated/applicants/")({ component: ApplicantsPage });
 
 type Applicant = {
   id: string;
