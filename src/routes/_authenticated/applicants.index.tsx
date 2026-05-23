@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput } from "@/components/app/FormSection";
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES } from "@/lib/hr-constants";
 import { toast } from "sonner";
-import { Plus, Search, UserPlus, ArrowRight } from "lucide-react";
+import { Plus, Search, UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/applicants/")({ component: ApplicantsPage });
 
