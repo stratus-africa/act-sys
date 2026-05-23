@@ -59,6 +59,9 @@ function StaffProfilePage() {
   const [assigning, setAssigning] = useState(false);
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [newCred, setNewCred] = useState<Partial<Credential>>({ kind: "license", name: "", status: "active" });
+  const [photoSignedUrl, setPhotoSignedUrl] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     const [{ data: p }, { data: r }, { data: a }, { data: v }, { data: ts }, { data: cga }, { data: rna }, { data: rp }, { data: pats }, { data: creds }] = await Promise.all([
