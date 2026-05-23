@@ -19,7 +19,7 @@ type Profile = {
   dob: string | null; ssn_last4: string | null; hire_date: string | null; termination_date: string | null;
   position: string | null; department: string | null; pay_type: string | null; pay_rate: number | null;
   emergency_contact_name: string | null; emergency_contact_phone: string | null; emergency_contact_relation: string | null;
-  hr_notes: string | null;
+  hr_notes: string | null; photo_url: string | null;
 };
 type RoleName = "admin" | "rn" | "caregiver" | "patient";
 type Credential = { id: string; kind: string; name: string; number: string | null; issued_on: string | null; expires_on: string | null; status: string; notes: string | null; file_path: string | null };
