@@ -104,7 +104,8 @@ function StaffProfilePage() {
   }, [profile?.photo_url]);
 
   const uploadPhoto = async (file: File) => {
-    const err = validateUpload(file, { allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/heic"] });
+    if (!file.type.startsWith("image/")) return toast.error("Please choose an image file.");
+    const err = validateUpload(file);
     if (err) return toast.error(err);
     setPhotoUploading(true);
     const path = `staff/${staffId}/photo-${Date.now()}-${file.name}`;
