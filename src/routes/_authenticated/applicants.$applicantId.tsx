@@ -5,9 +5,10 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES, ONBOARDING_DOCS, PCA_SKILLS, skillKey } from "@/lib/hr-constants";
-import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
+import { validateUpload } from "@/lib/file-upload";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download, AlertTriangle, ChevronDown, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/applicants/$applicantId")({ component: ApplicantDetailPage });
 
