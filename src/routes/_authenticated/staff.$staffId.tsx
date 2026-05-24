@@ -545,7 +545,7 @@ function StaffProfilePage() {
                   </div>
                 )}
               </div>
-              {canEdit && (
+              {isAdmin ? (
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -576,6 +576,8 @@ function StaffProfilePage() {
                     }}
                   />
                 </div>
+              ) : (
+                <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground text-center">Admin access required to manage staff photos.</p>
               )}
             </div>
 

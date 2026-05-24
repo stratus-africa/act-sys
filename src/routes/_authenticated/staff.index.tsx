@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Mail, Trash2, UserPlus, Copy, Check } from "lucide-react";
+import { Mail, Trash2, UserPlus, Copy, Check, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/")({ component: StaffPage });
 
-type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean };
+type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; photo_url: string | null };
 type Role = { id: string; user_id: string; role: "admin" | "rn" | "caregiver" | "patient" };
 type Invite = { id: string; email: string; role: string; created_at: string; accepted_at: string | null; accepted_by: string | null; token: string | null };
 
@@ -26,6 +27,7 @@ function StaffPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role["role"]>("caregiver");
   const [copied, setCopied] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   const inviteUrl = (token: string) => `${typeof window !== "undefined" ? window.location.origin : ""}/accept-invite/${token}`;
 
@@ -43,10 +45,21 @@ function StaffPage() {
       supabase.from("user_roles").select("*"),
       supabase.from("staff_invitations").select("*").order("created_at", { ascending: false }),
     ]);
-    setProfiles((p ?? []) as Profile[]);
+    const profs = (p ?? []) as Profile[];
+    setProfiles(profs);
     setRoles((r ?? []) as Role[]);
     setInvites((i ?? []) as Invite[]);
     setLoading(false);
+
+    // Sign URLs for staff photos (admin-only bucket, RLS enforces access)
+    const withPhotos = profs.filter((x) => x.photo_url);
+    if (withPhotos.length) {
+      const entries = await Promise.all(withPhotos.map(async (x) => {
+        const { data } = await supabase.storage.from("hr-documents").createSignedUrl(x.photo_url!, 3600);
+        return [x.id, data?.signedUrl ?? ""] as const;
+      }));
+      setPhotoUrls(Object.fromEntries(entries.filter(([, u]) => u)));
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -160,8 +173,14 @@ function StaffPage() {
                   return (
                     <tr key={p.id}>
                       <td className="px-4 py-3 font-semibold">
-                        <Link to="/staff/$staffId" params={{ staffId: p.id }} className="hover:underline">
-                          {p.full_name ?? "—"}
+                        <Link to="/staff/$staffId" params={{ staffId: p.id }} className="flex items-center gap-3 hover:underline">
+                          <Avatar className="size-8 border border-border">
+                            {photoUrls[p.id] && <AvatarImage src={photoUrls[p.id]} alt={p.full_name ?? "Staff"} />}
+                            <AvatarFallback className="text-[10px] font-bold">
+                              {p.full_name ? p.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() : <User className="size-3.5" />}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{p.full_name ?? "—"}</span>
                         </Link>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs">{p.email ?? "—"}</td>

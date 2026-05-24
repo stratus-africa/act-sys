@@ -5,9 +5,10 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, FieldLabel, TextInput, TextArea } from "@/components/app/FormSection";
 import { APPLICANT_POSITIONS, APPLICANT_STATUSES, ONBOARDING_DOCS, PCA_SKILLS, skillKey } from "@/lib/hr-constants";
-import { validateUpload, MAX_UPLOAD_MB } from "@/lib/file-upload";
+import { validateUpload } from "@/lib/file-upload";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, FileText, Upload, UserCheck, Trash2, Download, AlertTriangle, ChevronDown, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/applicants/$applicantId")({ component: ApplicantDetailPage });
 
@@ -34,6 +35,25 @@ const STAGE_REQUIRED_DOCS: Record<string, string[]> = {
   interview: [],
   offer: ["ethics", "confidentiality", "hepatitis_b", "tb_review"],
   hired: ["w4", "health_certificate", "training_ack"],
+};
+
+// Online onboarding form acknowledgements (legal text shown above the signature line).
+const FORM_STATEMENTS: Record<string, string> = {
+  application: "I certify that the information provided in this employment application is true and complete. I understand that any false statement, omission, or misrepresentation may result in rejection of this application or termination of employment.",
+  criminal_background: "I authorize the agency to perform a criminal background inquiry and to obtain any related records from law enforcement agencies. I understand the results will be used to determine my eligibility for employment.",
+  background_check: "I consent to a third-party background investigation including verification of identity, employment history, references, and any records relevant to my suitability for this position.",
+  lifting_agreement: "I acknowledge that this position may require lifting, pulling, transferring, and repositioning of patients. I confirm that I am physically able to perform these duties safely and in accordance with proper body mechanics training.",
+  at_will: "I understand and agree that my employment with the agency is on an at-will basis, meaning that either party may terminate the employment relationship at any time, with or without cause or notice.",
+  ethics: "I have received and read the Code of Ethics. I agree to abide by all professional, ethical, and legal standards while representing the agency, including respect for patient dignity, honesty, and integrity in all interactions.",
+  confidentiality: "I agree to keep confidential all patient health information, agency records, and proprietary information in accordance with HIPAA and agency privacy policies. I understand that any unauthorized disclosure may result in disciplinary action and legal liability.",
+  hepatitis_b: "I acknowledge that I have been informed about the risks of Hepatitis B exposure and the availability of the vaccine at no cost. I have made an informed decision regarding vaccination as recorded below.",
+  tb_review: "I confirm that I have reviewed the tuberculosis symptom questionnaire and have disclosed any signs or symptoms accurately. I agree to report any future symptoms immediately.",
+  health_certificate: "I attest that the health information I have provided is accurate and that I am physically and mentally fit to perform the essential duties of this position.",
+  training_ack: "I acknowledge that I have completed the required orientation and training and have had the opportunity to ask questions. I agree to follow all policies and procedures presented.",
+  reference_check: "I authorize the agency to contact the references I have provided and to verify my employment history.",
+  w4: "Under penalties of perjury, I declare that the W-4 withholding information I provide is, to the best of my knowledge, true, correct, and complete.",
+  w9: "Under penalties of perjury, I certify that the taxpayer identification information I provide is correct and that I am not subject to backup withholding.",
+  contractor_agreement: "I have read and agree to the terms of the Contractor Agreement, including the scope of work, compensation, and independent contractor status.",
 };
 
 type Doc = { id: string; kind: string; status: string; data: any; file_path: string | null; signed_at: string | null; updated_at: string };
@@ -317,42 +337,51 @@ function ApplicantDetailPage() {
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest">Onboarding Forms</h3>
-                <p className="text-xs text-muted-foreground mt-1">Track and upload each required onboarding document.</p>
+                <p className="text-xs text-muted-foreground mt-1">Fill out each form online with a typed signature, or upload a completed copy.</p>
               </div>
               <div className="text-xs font-mono text-muted-foreground">{completedDocs} / {ONBOARDING_DOCS.length} complete</div>
             </div>
-            <ul className="divide-y divide-border">
+            <Accordion type="multiple" className="divide-y divide-border">
               {ONBOARDING_DOCS.map((od) => {
                 const existing = docs.find((d) => d.kind === od.kind);
                 const status = existing?.status ?? "pending";
                 return (
-                  <li key={od.kind} className="px-6 py-4 flex flex-wrap items-center gap-4">
-                    <div className="flex-1 min-w-60">
-                      <div className="font-semibold text-sm flex items-center gap-2">
-                        <FileText className="size-4 text-muted-foreground" />
-                        {od.label}
-                        {od.required && <span className="text-[9px] font-bold uppercase text-destructive">Required</span>}
+                  <AccordionItem key={od.kind} value={od.kind} className="border-0">
+                    <div className="px-6 py-3 flex flex-wrap items-center gap-3">
+                      <FileText className="size-4 text-muted-foreground" />
+                      <div className="flex-1 min-w-60">
+                        <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                          {od.label}
+                          {od.required && <span className="text-[9px] font-bold uppercase text-destructive">Required</span>}
+                          <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (status === "completed" ? "bg-primary/10 text-primary" : status === "declined" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground")}>{status}</span>
+                        </div>
+                        {existing?.signed_at && <div className="text-[10px] font-mono text-muted-foreground mt-1">Signed {new Date(existing.signed_at).toLocaleString()}</div>}
                       </div>
-                      {existing?.signed_at && <div className="text-[10px] font-mono text-muted-foreground mt-1">Updated {new Date(existing.signed_at).toLocaleString()}</div>}
+                      {existing?.file_path && (
+                        <button onClick={() => downloadDoc(existing.file_path!)} className="text-xs underline inline-flex items-center gap-1"><Download className="size-3" /> View file</button>
+                      )}
+                      <AccordionTrigger className="py-0 px-3 border border-border hover:border-primary text-[10px] font-bold uppercase tracking-widest flex-none">
+                        <span className="inline-flex items-center gap-1"><Pencil className="size-3" /> Fill / View</span>
+                      </AccordionTrigger>
                     </div>
-                    <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (status === "completed" ? "bg-primary/10 text-primary" : status === "declined" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground")}>{status}</span>
-                    {existing?.file_path && (
-                      <button onClick={() => downloadDoc(existing.file_path!)} className="text-xs underline inline-flex items-center gap-1"><Download className="size-3" /> View</button>
-                    )}
-                    <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-3 py-1.5 border border-border hover:border-primary">
-                      <Upload className="size-3" /> Upload
-                      <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDocFile(od.kind, f); e.currentTarget.value = ""; }} />
-                    </label>
-                    <select value={status} onChange={(e) => upsertDoc(od.kind, { status: e.target.value })} className="border border-border bg-background text-xs px-2 py-1">
-                      <option value="pending">Pending</option>
-                      <option value="completed">Completed</option>
-                      <option value="declined">Declined</option>
-                      <option value="expired">Expired</option>
-                    </select>
-                  </li>
+                    <AccordionContent className="px-6 pb-5">
+                      <OnboardingFormFiller
+                        kind={od.kind}
+                        label={od.label}
+                        statement={FORM_STATEMENTS[od.kind] ?? "I confirm that the information provided is accurate and complete."}
+                        existing={existing}
+                        onSubmit={async (payload) => {
+                          await upsertDoc(od.kind, payload as any);
+                          toast.success(`${od.label} submitted`);
+                        }}
+                        onUpload={async (f) => { await uploadDocFile(od.kind, f); }}
+                        onStatusChange={async (s) => { await upsertDoc(od.kind, { status: s }); }}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
                 );
               })}
-            </ul>
+            </Accordion>
           </div>
         )}
 
@@ -375,30 +404,42 @@ function ApplicantDetailPage() {
               </div>
             </div>
 
-            {PCA_SKILLS.map((group) => (
-              <div key={group.group} className="border border-border">
-                <div className="px-4 py-2 bg-muted text-[10px] font-bold uppercase tracking-widest">{group.group}</div>
-                <ul className="divide-y divide-border">
-                  {group.items.map((item) => {
-                    const key = skillKey(group.group, item);
-                    const rating = skills?.ratings?.[key];
-                    return (
-                      <li key={key} className="px-4 py-2.5 flex items-center justify-between gap-4">
-                        <span className="text-sm flex-1">{item}</span>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4].map((r) => (
-                            <button key={r} onClick={() => setSkillRating(key, r)}
-                              className={"size-8 text-xs font-bold border " + (rating === r ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-muted-foreground")}>
-                              {r}
-                            </button>
-                          ))}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+            <Accordion type="multiple" defaultValue={[PCA_SKILLS[0]?.group]} className="space-y-2">
+              {PCA_SKILLS.map((group) => {
+                const rated = group.items.filter((item) => skills?.ratings?.[skillKey(group.group, item)] != null).length;
+                return (
+                  <AccordionItem key={group.group} value={group.group} className="border border-border">
+                    <AccordionTrigger className="px-4 py-2 bg-muted text-[10px] font-bold uppercase tracking-widest hover:no-underline">
+                      <span className="flex items-center gap-3">
+                        {group.group}
+                        <span className="text-muted-foreground font-mono normal-case tracking-normal">{rated}/{group.items.length} rated</span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0">
+                      <ul className="divide-y divide-border">
+                        {group.items.map((item) => {
+                          const key = skillKey(group.group, item);
+                          const rating = skills?.ratings?.[key];
+                          return (
+                            <li key={key} className="px-4 py-2.5 flex items-center justify-between gap-4">
+                              <span className="text-sm flex-1">{item}</span>
+                              <div className="flex gap-1">
+                                {[1, 2, 3, 4].map((r) => (
+                                  <button key={r} onClick={() => setSkillRating(key, r)}
+                                    className={"size-8 text-xs font-bold border " + (rating === r ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-muted-foreground")}>
+                                    {r}
+                                  </button>
+                                ))}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
         )}
 
@@ -436,6 +477,104 @@ function ApplicantDetailPage() {
     </>
   );
 }
+
+function OnboardingFormFiller({
+  kind, label, statement, existing, onSubmit, onUpload, onStatusChange,
+}: {
+  kind: string;
+  label: string;
+  statement: string;
+  existing?: Doc;
+  onSubmit: (payload: { data: any; signature_typed: string; status: string; signed_at: string }) => Promise<void> | void;
+  onUpload: (f: File) => Promise<void> | void;
+  onStatusChange: (s: string) => Promise<void> | void;
+}) {
+  const initialData = (existing?.data ?? {}) as any;
+  const [acknowledged, setAcknowledged] = useState<boolean>(!!initialData.acknowledged);
+  const [notes, setNotes] = useState<string>(initialData.notes ?? "");
+  const [response, setResponse] = useState<string>(initialData.response ?? "");
+  const [signature, setSignature] = useState<string>((existing as any)?.signature_typed ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const status = existing?.status ?? "pending";
+
+  const handleSubmit = async () => {
+    if (!acknowledged) return toast.error("You must acknowledge the statement");
+    if (!signature.trim()) return toast.error("Typed signature required");
+    setSubmitting(true);
+    await onSubmit({
+      data: { acknowledged: true, notes, response, kind },
+      signature_typed: signature.trim(),
+      status: "completed",
+      signed_at: new Date().toISOString(),
+    });
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="space-y-4 border-l-2 border-primary/30 pl-4">
+      <div className="text-xs text-muted-foreground italic leading-relaxed">{statement}</div>
+
+      {(kind === "hepatitis_b" || kind === "tb_review") && (
+        <div>
+          <FieldLabel>Your Response</FieldLabel>
+          <select value={response} onChange={(e) => setResponse(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm">
+            <option value="">— Select —</option>
+            {kind === "hepatitis_b" ? (
+              <>
+                <option value="accept">I ACCEPT the Hepatitis B vaccine</option>
+                <option value="decline">I DECLINE the Hepatitis B vaccine</option>
+                <option value="already_vaccinated">I am already vaccinated</option>
+              </>
+            ) : (
+              <>
+                <option value="no_symptoms">I have NO symptoms of TB</option>
+                <option value="has_symptoms">I have symptoms — see notes</option>
+              </>
+            )}
+          </select>
+        </div>
+      )}
+
+      <div>
+        <FieldLabel>Notes / Additional Information (optional)</FieldLabel>
+        <TextArea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add any clarifying information…" />
+      </div>
+
+      <label className="flex items-start gap-2 text-xs cursor-pointer">
+        <input type="checkbox" className="mt-0.5" checked={acknowledged} onChange={(e) => setAcknowledged(e.target.checked)} />
+        <span>I have read and acknowledge the statement above for <strong>{label}</strong>.</span>
+      </label>
+
+      <div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+        <div>
+          <FieldLabel>Typed Signature *</FieldLabel>
+          <TextInput value={signature} onChange={(e) => setSignature(e.target.value)} placeholder="Type your full legal name" />
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || !acknowledged || !signature.trim()}
+          className="bg-primary text-primary-foreground px-5 py-2 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 disabled:opacity-40"
+        >
+          <Check className="size-3.5" /> {submitting ? "Submitting…" : existing?.signed_at ? "Re-sign" : "Sign & Submit"}
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border">
+        <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-3 py-1.5 border border-border hover:border-primary">
+          <Upload className="size-3" /> Upload completed copy instead
+          <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }} />
+        </label>
+        <select value={status} onChange={(e) => onStatusChange(e.target.value)} className="border border-border bg-background text-xs px-2 py-1">
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="declined">Declined</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
 
 function StageHistoryViewer({ history }: { history: StageEntry[] }) {
   const [names, setNames] = useState<Record<string, string>>({});
