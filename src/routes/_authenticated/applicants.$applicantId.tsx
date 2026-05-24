@@ -478,6 +478,104 @@ function ApplicantDetailPage() {
   );
 }
 
+function OnboardingFormFiller({
+  kind, label, statement, existing, onSubmit, onUpload, onStatusChange,
+}: {
+  kind: string;
+  label: string;
+  statement: string;
+  existing?: Doc;
+  onSubmit: (payload: { data: any; signature_typed: string; status: string; signed_at: string }) => Promise<void> | void;
+  onUpload: (f: File) => Promise<void> | void;
+  onStatusChange: (s: string) => Promise<void> | void;
+}) {
+  const initialData = (existing?.data ?? {}) as any;
+  const [acknowledged, setAcknowledged] = useState<boolean>(!!initialData.acknowledged);
+  const [notes, setNotes] = useState<string>(initialData.notes ?? "");
+  const [response, setResponse] = useState<string>(initialData.response ?? "");
+  const [signature, setSignature] = useState<string>((existing as any)?.signature_typed ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const status = existing?.status ?? "pending";
+
+  const handleSubmit = async () => {
+    if (!acknowledged) return toast.error("You must acknowledge the statement");
+    if (!signature.trim()) return toast.error("Typed signature required");
+    setSubmitting(true);
+    await onSubmit({
+      data: { acknowledged: true, notes, response, kind },
+      signature_typed: signature.trim(),
+      status: "completed",
+      signed_at: new Date().toISOString(),
+    });
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="space-y-4 border-l-2 border-primary/30 pl-4">
+      <div className="text-xs text-muted-foreground italic leading-relaxed">{statement}</div>
+
+      {(kind === "hepatitis_b" || kind === "tb_review") && (
+        <div>
+          <FieldLabel>Your Response</FieldLabel>
+          <select value={response} onChange={(e) => setResponse(e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-sm">
+            <option value="">— Select —</option>
+            {kind === "hepatitis_b" ? (
+              <>
+                <option value="accept">I ACCEPT the Hepatitis B vaccine</option>
+                <option value="decline">I DECLINE the Hepatitis B vaccine</option>
+                <option value="already_vaccinated">I am already vaccinated</option>
+              </>
+            ) : (
+              <>
+                <option value="no_symptoms">I have NO symptoms of TB</option>
+                <option value="has_symptoms">I have symptoms — see notes</option>
+              </>
+            )}
+          </select>
+        </div>
+      )}
+
+      <div>
+        <FieldLabel>Notes / Additional Information (optional)</FieldLabel>
+        <TextArea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add any clarifying information…" />
+      </div>
+
+      <label className="flex items-start gap-2 text-xs cursor-pointer">
+        <input type="checkbox" className="mt-0.5" checked={acknowledged} onChange={(e) => setAcknowledged(e.target.checked)} />
+        <span>I have read and acknowledge the statement above for <strong>{label}</strong>.</span>
+      </label>
+
+      <div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+        <div>
+          <FieldLabel>Typed Signature *</FieldLabel>
+          <TextInput value={signature} onChange={(e) => setSignature(e.target.value)} placeholder="Type your full legal name" />
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || !acknowledged || !signature.trim()}
+          className="bg-primary text-primary-foreground px-5 py-2 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 disabled:opacity-40"
+        >
+          <Check className="size-3.5" /> {submitting ? "Submitting…" : existing?.signed_at ? "Re-sign" : "Sign & Submit"}
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border">
+        <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-3 py-1.5 border border-border hover:border-primary">
+          <Upload className="size-3" /> Upload completed copy instead
+          <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }} />
+        </label>
+        <select value={status} onChange={(e) => onStatusChange(e.target.value)} className="border border-border bg-background text-xs px-2 py-1">
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="declined">Declined</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+
 function StageHistoryViewer({ history }: { history: StageEntry[] }) {
   const [names, setNames] = useState<Record<string, string>>({});
   useEffect(() => {
