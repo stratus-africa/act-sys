@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FieldLabel, TextInput, FormSection } from "@/components/app/FormSection";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Mail, Trash2, UserPlus, Copy, Check } from "lucide-react";
+import { Mail, Trash2, UserPlus, Copy, Check, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/staff/")({ component: StaffPage });
 
-type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean };
+type Profile = { id: string; email: string | null; full_name: string | null; phone: string | null; license_no: string | null; active: boolean; photo_url: string | null };
 type Role = { id: string; user_id: string; role: "admin" | "rn" | "caregiver" | "patient" };
 type Invite = { id: string; email: string; role: string; created_at: string; accepted_at: string | null; accepted_by: string | null; token: string | null };
 
