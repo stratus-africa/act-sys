@@ -337,42 +337,51 @@ function ApplicantDetailPage() {
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest">Onboarding Forms</h3>
-                <p className="text-xs text-muted-foreground mt-1">Track and upload each required onboarding document.</p>
+                <p className="text-xs text-muted-foreground mt-1">Fill out each form online with a typed signature, or upload a completed copy.</p>
               </div>
               <div className="text-xs font-mono text-muted-foreground">{completedDocs} / {ONBOARDING_DOCS.length} complete</div>
             </div>
-            <ul className="divide-y divide-border">
+            <Accordion type="multiple" className="divide-y divide-border">
               {ONBOARDING_DOCS.map((od) => {
                 const existing = docs.find((d) => d.kind === od.kind);
                 const status = existing?.status ?? "pending";
                 return (
-                  <li key={od.kind} className="px-6 py-4 flex flex-wrap items-center gap-4">
-                    <div className="flex-1 min-w-60">
-                      <div className="font-semibold text-sm flex items-center gap-2">
-                        <FileText className="size-4 text-muted-foreground" />
-                        {od.label}
-                        {od.required && <span className="text-[9px] font-bold uppercase text-destructive">Required</span>}
+                  <AccordionItem key={od.kind} value={od.kind} className="border-0">
+                    <div className="px-6 py-3 flex flex-wrap items-center gap-3">
+                      <FileText className="size-4 text-muted-foreground" />
+                      <div className="flex-1 min-w-60">
+                        <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                          {od.label}
+                          {od.required && <span className="text-[9px] font-bold uppercase text-destructive">Required</span>}
+                          <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (status === "completed" ? "bg-primary/10 text-primary" : status === "declined" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground")}>{status}</span>
+                        </div>
+                        {existing?.signed_at && <div className="text-[10px] font-mono text-muted-foreground mt-1">Signed {new Date(existing.signed_at).toLocaleString()}</div>}
                       </div>
-                      {existing?.signed_at && <div className="text-[10px] font-mono text-muted-foreground mt-1">Updated {new Date(existing.signed_at).toLocaleString()}</div>}
+                      {existing?.file_path && (
+                        <button onClick={() => downloadDoc(existing.file_path!)} className="text-xs underline inline-flex items-center gap-1"><Download className="size-3" /> View file</button>
+                      )}
+                      <AccordionTrigger className="py-0 px-3 border border-border hover:border-primary text-[10px] font-bold uppercase tracking-widest flex-none">
+                        <span className="inline-flex items-center gap-1"><Pencil className="size-3" /> Fill / View</span>
+                      </AccordionTrigger>
                     </div>
-                    <span className={"text-[10px] font-bold uppercase px-2 py-0.5 " + (status === "completed" ? "bg-primary/10 text-primary" : status === "declined" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground")}>{status}</span>
-                    {existing?.file_path && (
-                      <button onClick={() => downloadDoc(existing.file_path!)} className="text-xs underline inline-flex items-center gap-1"><Download className="size-3" /> View</button>
-                    )}
-                    <label className="cursor-pointer text-xs inline-flex items-center gap-1 px-3 py-1.5 border border-border hover:border-primary">
-                      <Upload className="size-3" /> Upload
-                      <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDocFile(od.kind, f); e.currentTarget.value = ""; }} />
-                    </label>
-                    <select value={status} onChange={(e) => upsertDoc(od.kind, { status: e.target.value })} className="border border-border bg-background text-xs px-2 py-1">
-                      <option value="pending">Pending</option>
-                      <option value="completed">Completed</option>
-                      <option value="declined">Declined</option>
-                      <option value="expired">Expired</option>
-                    </select>
-                  </li>
+                    <AccordionContent className="px-6 pb-5">
+                      <OnboardingFormFiller
+                        kind={od.kind}
+                        label={od.label}
+                        statement={FORM_STATEMENTS[od.kind] ?? "I confirm that the information provided is accurate and complete."}
+                        existing={existing}
+                        onSubmit={async (payload) => {
+                          await upsertDoc(od.kind, payload as any);
+                          toast.success(`${od.label} submitted`);
+                        }}
+                        onUpload={(f) => uploadDocFile(od.kind, f)}
+                        onStatusChange={(s) => upsertDoc(od.kind, { status: s })}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
                 );
               })}
-            </ul>
+            </Accordion>
           </div>
         )}
 
@@ -395,30 +404,42 @@ function ApplicantDetailPage() {
               </div>
             </div>
 
-            {PCA_SKILLS.map((group) => (
-              <div key={group.group} className="border border-border">
-                <div className="px-4 py-2 bg-muted text-[10px] font-bold uppercase tracking-widest">{group.group}</div>
-                <ul className="divide-y divide-border">
-                  {group.items.map((item) => {
-                    const key = skillKey(group.group, item);
-                    const rating = skills?.ratings?.[key];
-                    return (
-                      <li key={key} className="px-4 py-2.5 flex items-center justify-between gap-4">
-                        <span className="text-sm flex-1">{item}</span>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4].map((r) => (
-                            <button key={r} onClick={() => setSkillRating(key, r)}
-                              className={"size-8 text-xs font-bold border " + (rating === r ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-muted-foreground")}>
-                              {r}
-                            </button>
-                          ))}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+            <Accordion type="multiple" defaultValue={[PCA_SKILLS[0]?.group]} className="space-y-2">
+              {PCA_SKILLS.map((group) => {
+                const rated = group.items.filter((item) => skills?.ratings?.[skillKey(group.group, item)] != null).length;
+                return (
+                  <AccordionItem key={group.group} value={group.group} className="border border-border">
+                    <AccordionTrigger className="px-4 py-2 bg-muted text-[10px] font-bold uppercase tracking-widest hover:no-underline">
+                      <span className="flex items-center gap-3">
+                        {group.group}
+                        <span className="text-muted-foreground font-mono normal-case tracking-normal">{rated}/{group.items.length} rated</span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0">
+                      <ul className="divide-y divide-border">
+                        {group.items.map((item) => {
+                          const key = skillKey(group.group, item);
+                          const rating = skills?.ratings?.[key];
+                          return (
+                            <li key={key} className="px-4 py-2.5 flex items-center justify-between gap-4">
+                              <span className="text-sm flex-1">{item}</span>
+                              <div className="flex gap-1">
+                                {[1, 2, 3, 4].map((r) => (
+                                  <button key={r} onClick={() => setSkillRating(key, r)}
+                                    className={"size-8 text-xs font-bold border " + (rating === r ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-muted-foreground")}>
+                                    {r}
+                                  </button>
+                                ))}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
         )}
 
