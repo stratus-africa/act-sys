@@ -173,8 +173,14 @@ function StaffPage() {
                   return (
                     <tr key={p.id}>
                       <td className="px-4 py-3 font-semibold">
-                        <Link to="/staff/$staffId" params={{ staffId: p.id }} className="hover:underline">
-                          {p.full_name ?? "—"}
+                        <Link to="/staff/$staffId" params={{ staffId: p.id }} className="flex items-center gap-3 hover:underline">
+                          <Avatar className="size-8 border border-border">
+                            {photoUrls[p.id] && <AvatarImage src={photoUrls[p.id]} alt={p.full_name ?? "Staff"} />}
+                            <AvatarFallback className="text-[10px] font-bold">
+                              {p.full_name ? p.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() : <User className="size-3.5" />}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{p.full_name ?? "—"}</span>
                         </Link>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs">{p.email ?? "—"}</td>
