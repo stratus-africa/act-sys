@@ -37,6 +37,25 @@ const STAGE_REQUIRED_DOCS: Record<string, string[]> = {
   hired: ["w4", "health_certificate", "training_ack"],
 };
 
+// Online onboarding form acknowledgements (legal text shown above the signature line).
+const FORM_STATEMENTS: Record<string, string> = {
+  application: "I certify that the information provided in this employment application is true and complete. I understand that any false statement, omission, or misrepresentation may result in rejection of this application or termination of employment.",
+  criminal_background: "I authorize the agency to perform a criminal background inquiry and to obtain any related records from law enforcement agencies. I understand the results will be used to determine my eligibility for employment.",
+  background_check: "I consent to a third-party background investigation including verification of identity, employment history, references, and any records relevant to my suitability for this position.",
+  lifting_agreement: "I acknowledge that this position may require lifting, pulling, transferring, and repositioning of patients. I confirm that I am physically able to perform these duties safely and in accordance with proper body mechanics training.",
+  at_will: "I understand and agree that my employment with the agency is on an at-will basis, meaning that either party may terminate the employment relationship at any time, with or without cause or notice.",
+  ethics: "I have received and read the Code of Ethics. I agree to abide by all professional, ethical, and legal standards while representing the agency, including respect for patient dignity, honesty, and integrity in all interactions.",
+  confidentiality: "I agree to keep confidential all patient health information, agency records, and proprietary information in accordance with HIPAA and agency privacy policies. I understand that any unauthorized disclosure may result in disciplinary action and legal liability.",
+  hepatitis_b: "I acknowledge that I have been informed about the risks of Hepatitis B exposure and the availability of the vaccine at no cost. I have made an informed decision regarding vaccination as recorded below.",
+  tb_review: "I confirm that I have reviewed the tuberculosis symptom questionnaire and have disclosed any signs or symptoms accurately. I agree to report any future symptoms immediately.",
+  health_certificate: "I attest that the health information I have provided is accurate and that I am physically and mentally fit to perform the essential duties of this position.",
+  training_ack: "I acknowledge that I have completed the required orientation and training and have had the opportunity to ask questions. I agree to follow all policies and procedures presented.",
+  reference_check: "I authorize the agency to contact the references I have provided and to verify my employment history.",
+  w4: "Under penalties of perjury, I declare that the W-4 withholding information I provide is, to the best of my knowledge, true, correct, and complete.",
+  w9: "Under penalties of perjury, I certify that the taxpayer identification information I provide is correct and that I am not subject to backup withholding.",
+  contractor_agreement: "I have read and agree to the terms of the Contractor Agreement, including the scope of work, compensation, and independent contractor status.",
+};
+
 type Doc = { id: string; kind: string; status: string; data: any; file_path: string | null; signed_at: string | null; updated_at: string };
 type Skills = { id: string; checklist_kind: string; ratings: Record<string, number>; rn_supervisor_name: string | null; observed_at: string | null; signed_at: string | null };
 
