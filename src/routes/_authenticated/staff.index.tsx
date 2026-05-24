@@ -27,6 +27,7 @@ function StaffPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role["role"]>("caregiver");
   const [copied, setCopied] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   const inviteUrl = (token: string) => `${typeof window !== "undefined" ? window.location.origin : ""}/accept-invite/${token}`;
 
