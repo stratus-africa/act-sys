@@ -374,8 +374,8 @@ function ApplicantDetailPage() {
                           await upsertDoc(od.kind, payload as any);
                           toast.success(`${od.label} submitted`);
                         }}
-                        onUpload={(f) => uploadDocFile(od.kind, f)}
-                        onStatusChange={(s) => upsertDoc(od.kind, { status: s })}
+                        onUpload={async (f) => { await uploadDocFile(od.kind, f); }}
+                        onStatusChange={async (s) => { await upsertDoc(od.kind, { status: s }); }}
                       />
                     </AccordionContent>
                   </AccordionItem>
