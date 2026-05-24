@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/applicants/")({ component:
 
 const HR_STAGES = ["applied", "screening", "background", "interview", "offer", "hired"] as const;
 
-function HrPipelineWidget() {
+function HrPipelineWidget({ onStageClick, activeStage }: { onStageClick: (s: string) => void; activeStage: string }) {
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [hired30, setHired30] = useState(0);
   const [total, setTotal] = useState(0);
@@ -41,8 +41,11 @@ function HrPipelineWidget() {
       <div className="px-6 py-4 border-b border-border flex justify-between items-center">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-widest">HR Pipeline</h3>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">Applicants by stage · Hires last 30 days</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">Click a stage to filter · Hires last 30 days</p>
         </div>
+        {activeStage && (
+          <button onClick={() => onStageClick("")} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">Clear filter</button>
+        )}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
         <div className="bg-card p-5"><div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-mono">Total Applicants</div><div className="text-3xl font-extrabold mt-3 tabular-nums">{counts == null ? "—" : total}</div></div>
@@ -54,14 +57,21 @@ function HrPipelineWidget() {
         {HR_STAGES.map((s) => {
           const n = counts?.[s] ?? 0;
           const pct = (n / max) * 100;
+          const isActive = activeStage === s;
           return (
-            <div key={s} className="grid grid-cols-[110px_1fr_40px] items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{s}</span>
+            <button
+              key={s}
+              type="button"
+              onClick={() => onStageClick(isActive ? "" : s)}
+              className={"w-full grid grid-cols-[110px_1fr_40px] items-center gap-3 py-1 px-2 -mx-2 text-left transition-colors hover:bg-muted/50 " + (isActive ? "bg-primary/5 ring-1 ring-primary" : "")}
+              title={`Filter applicants by ${s}`}
+            >
+              <span className={"text-[10px] font-bold uppercase tracking-widest " + (isActive ? "text-primary" : "text-muted-foreground")}>{s}</span>
               <div className="h-2 bg-muted relative overflow-hidden">
-                <div className={"absolute inset-y-0 left-0 transition-all " + (s === "hired" ? "bg-primary" : "bg-foreground/70")} style={{ width: pct + "%" }} />
+                <div className={"absolute inset-y-0 left-0 transition-all " + (s === "hired" ? "bg-primary" : isActive ? "bg-primary" : "bg-foreground/70")} style={{ width: pct + "%" }} />
               </div>
               <span className="text-sm font-extrabold tabular-nums text-right">{counts == null ? "—" : n}</span>
-            </div>
+            </button>
           );
         })}
       </div>
