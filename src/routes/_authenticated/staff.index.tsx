@@ -45,10 +45,21 @@ function StaffPage() {
       supabase.from("user_roles").select("*"),
       supabase.from("staff_invitations").select("*").order("created_at", { ascending: false }),
     ]);
-    setProfiles((p ?? []) as Profile[]);
+    const profs = (p ?? []) as Profile[];
+    setProfiles(profs);
     setRoles((r ?? []) as Role[]);
     setInvites((i ?? []) as Invite[]);
     setLoading(false);
+
+    // Sign URLs for staff photos (admin-only bucket, RLS enforces access)
+    const withPhotos = profs.filter((x) => x.photo_url);
+    if (withPhotos.length) {
+      const entries = await Promise.all(withPhotos.map(async (x) => {
+        const { data } = await supabase.storage.from("hr-documents").createSignedUrl(x.photo_url!, 3600);
+        return [x.id, data?.signedUrl ?? ""] as const;
+      }));
+      setPhotoUrls(Object.fromEntries(entries.filter(([, u]) => u)));
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
