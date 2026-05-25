@@ -31,6 +31,7 @@ function PatientShell() {
   const [skin, setSkin] = useState<{ status: string; assessment_date: string } | null>(null);
   const [allergyCount, setAllergyCount] = useState<{ total: number; critical: number }>({ total: 0, critical: 0 });
   const [uploading, setUploading] = useState(false);
+  const [photoSignedUrl, setPhotoSignedUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const loadPatient = useCallback(() => {
@@ -60,6 +61,22 @@ function PatientShell() {
     return () => window.removeEventListener("patient:refresh", handler);
   }, [patientId, loadPatient]);
 
+  // patient-photos bucket is private — sign on read. Supports legacy rows that stored a public URL.
+  useEffect(() => {
+    const raw: string | undefined = p?.photo_url;
+    if (!raw) { setPhotoSignedUrl(null); return; }
+    let path = raw;
+    const marker = "/patient-photos/";
+    const idx = raw.indexOf(marker);
+    if (idx >= 0) path = raw.slice(idx + marker.length).split("?")[0];
+    if (/^https?:\/\//i.test(path)) { setPhotoSignedUrl(raw); return; }
+    let cancelled = false;
+    supabase.storage.from("patient-photos").createSignedUrl(path, 3600).then(({ data }) => {
+      if (!cancelled) setPhotoSignedUrl(data?.signedUrl ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [p?.photo_url]);
+
   const onPhotoSelected = async (file: File) => {
     if (!canEdit) return;
     setUploading(true);
@@ -67,11 +84,11 @@ function PatientShell() {
     const path = `${patientId}/${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from("patient-photos").upload(path, file, { contentType: file.type, upsert: false });
     if (upErr) { setUploading(false); toast.error(upErr.message); return; }
-    const { data: pub } = supabase.storage.from("patient-photos").getPublicUrl(path);
-    const { error } = await supabase.from("patients").update({ photo_url: pub.publicUrl }).eq("id", patientId);
+    // Store the storage path (bucket is private; we sign on read).
+    const { error } = await supabase.from("patients").update({ photo_url: path }).eq("id", patientId);
     setUploading(false);
     if (error) { toast.error(error.message); return; }
-    setP((prev: any) => ({ ...prev, photo_url: pub.publicUrl }));
+    setP((prev: any) => ({ ...prev, photo_url: path }));
     toast.success("Photo updated");
   };
   const removePhoto = async () => {
@@ -79,6 +96,7 @@ function PatientShell() {
     const { error } = await supabase.from("patients").update({ photo_url: null }).eq("id", patientId);
     if (error) { toast.error(error.message); return; }
     setP({ ...p, photo_url: null });
+    setPhotoSignedUrl(null);
   };
 
   const atRisk = fall ? fall.risk_level === "at_risk" || fall.total_score >= 4 : false;
@@ -143,8 +161,8 @@ function PatientShell() {
         <aside className="space-y-4 xl:sticky xl:top-44 xl:self-start">
           <div className="border border-border bg-card p-4 space-y-3">
             <div className="aspect-square w-full bg-muted overflow-hidden border border-border grid place-items-center">
-              {p?.photo_url ? (
-                <img src={p.photo_url} alt="Patient" className="w-full h-full object-cover" />
+              {photoSignedUrl ? (
+                <img src={photoSignedUrl} alt="Patient" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-[10px] font-mono uppercase text-muted-foreground">No photo</div>
               )}

@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      applicant_accidents: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          description: string | null
+          fatalities: number | null
+          id: string
+          injuries: number | null
+          occurred_on: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          description?: string | null
+          fatalities?: number | null
+          id?: string
+          injuries?: number | null
+          occurred_on?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          description?: string | null
+          fatalities?: number | null
+          id?: string
+          injuries?: number | null
+          occurred_on?: string | null
+        }
+        Relationships: []
+      }
+      applicant_compliance: {
+        Row: {
+          applicant_id: string
+          completed_on: string | null
+          created_at: string
+          details: Json
+          expires_on: string | null
+          file_path: string | null
+          id: string
+          kind: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          completed_on?: string | null
+          created_at?: string
+          details?: Json
+          expires_on?: string | null
+          file_path?: string | null
+          id?: string
+          kind: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          completed_on?: string | null
+          created_at?: string
+          details?: Json
+          expires_on?: string | null
+          file_path?: string | null
+          id?: string
+          kind?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicant_criminal_history: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          ever_arrested: boolean | null
+          ever_convicted: boolean | null
+          id: string
+          incidents: Json
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          ever_arrested?: boolean | null
+          ever_convicted?: boolean | null
+          id?: string
+          incidents?: Json
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          ever_arrested?: boolean | null
+          ever_convicted?: boolean | null
+          id?: string
+          incidents?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       applicant_documents: {
         Row: {
           applicant_id: string
@@ -62,6 +161,294 @@ export type Database = {
         }
         Relationships: []
       }
+      applicant_education: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          degree: string | null
+          graduation_status: string | null
+          graduation_year: number | null
+          id: string
+          school_name: string | null
+          school_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          degree?: string | null
+          graduation_status?: string | null
+          graduation_year?: number | null
+          id?: string
+          school_name?: string | null
+          school_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          degree?: string | null
+          graduation_status?: string | null
+          graduation_year?: number | null
+          id?: string
+          school_name?: string | null
+          school_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicant_licenses: {
+        Row: {
+          active: boolean | null
+          applicant_id: string
+          created_at: string
+          expires_on: string | null
+          id: string
+          issued_on: string | null
+          kind: string
+          license_class: string | null
+          license_type: string | null
+          number: string | null
+          revoked: boolean | null
+          state: string | null
+          suspended: boolean | null
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          applicant_id: string
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          kind: string
+          license_class?: string | null
+          license_type?: string | null
+          number?: string | null
+          revoked?: boolean | null
+          state?: string | null
+          suspended?: boolean | null
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          applicant_id?: string
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          kind?: string
+          license_class?: string | null
+          license_type?: string | null
+          number?: string | null
+          revoked?: boolean | null
+          state?: string | null
+          suspended?: boolean | null
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      applicant_medical_compliance_issues: {
+        Row: {
+          applicant_id: string
+          board_discipline: boolean | null
+          created_at: string
+          details: string | null
+          id: string
+          medical_disciplinary: boolean | null
+          medicare_exclusion: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          board_discipline?: boolean | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          medical_disciplinary?: boolean | null
+          medicare_exclusion?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          board_discipline?: boolean | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          medical_disciplinary?: boolean | null
+          medicare_exclusion?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicant_onboarding_progress: {
+        Row: {
+          applicant_id: string
+          completed_steps: number[]
+          created_at: string
+          current_step: number
+          draft_data: Json
+          id: string
+          last_saved_at: string
+          resume_token: string | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          completed_steps?: number[]
+          created_at?: string
+          current_step?: number
+          draft_data?: Json
+          id?: string
+          last_saved_at?: string
+          resume_token?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          completed_steps?: number[]
+          created_at?: string
+          current_step?: number
+          draft_data?: Json
+          id?: string
+          last_saved_at?: string
+          resume_token?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicant_policy_acks: {
+        Row: {
+          acknowledged: boolean
+          applicant_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          policy_key: string
+          responses: Json
+          signature_typed: string | null
+          signature_url: string | null
+          signed_at: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          acknowledged?: boolean
+          applicant_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          policy_key: string
+          responses?: Json
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          acknowledged?: boolean
+          applicant_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          policy_key?: string
+          responses?: Json
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      applicant_references: {
+        Row: {
+          applicant_id: string
+          contacted_at: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          relationship: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          contacted_at?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          contacted_at?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      applicant_signatures: {
+        Row: {
+          applicant_id: string
+          context: string
+          id: string
+          ip_address: string | null
+          signature_typed: string | null
+          signature_url: string | null
+          signed_at: string
+          signer_name: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          applicant_id: string
+          context: string
+          id?: string
+          ip_address?: string | null
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string
+          signer_name?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          context?: string
+          id?: string
+          ip_address?: string | null
+          signature_typed?: string | null
+          signature_url?: string | null
+          signed_at?: string
+          signer_name?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       applicant_skills: {
         Row: {
           applicant_id: string
@@ -107,101 +494,236 @@ export type Database = {
         }
         Relationships: []
       }
+      applicant_traffic_violations: {
+        Row: {
+          applicant_id: string
+          charges: string | null
+          created_at: string
+          id: string
+          location: string | null
+          occurred_on: string | null
+        }
+        Insert: {
+          applicant_id: string
+          charges?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          occurred_on?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          charges?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          occurred_on?: string | null
+        }
+        Relationships: []
+      }
+      applicant_work_history: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          employer: string | null
+          end_date: string | null
+          id: string
+          performance_rating: Json | null
+          position: string | null
+          reason_for_leaving: string | null
+          rehire_eligible: boolean | null
+          start_date: string | null
+          supervisor: string | null
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          employer?: string | null
+          end_date?: string | null
+          id?: string
+          performance_rating?: Json | null
+          position?: string | null
+          reason_for_leaving?: string | null
+          rehire_eligible?: boolean | null
+          start_date?: string | null
+          supervisor?: string | null
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          employer?: string | null
+          end_date?: string | null
+          id?: string
+          performance_rating?: Json | null
+          position?: string | null
+          reason_for_leaving?: string | null
+          rehire_eligible?: boolean | null
+          start_date?: string | null
+          supervisor?: string | null
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       applicants: {
         Row: {
+          additional_skills: string | null
           address: string | null
+          agency_experience: boolean | null
+          agency_name: string | null
           applied_at: string
+          authorized_us: boolean | null
           availability: Json | null
           city: string | null
           counties_willing: string[] | null
           created_at: string
           created_by: string | null
+          disability_status: string | null
           dob: string | null
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           emergency_contact_relation: string | null
           first_name: string
+          gender_at_birth: string | null
+          has_drivers_license: boolean | null
+          has_vehicle: boolean | null
           hired_at: string | null
           hired_user_id: string | null
           id: string
           interviewer: string | null
           last_name: string
+          middle_name: string | null
           notes: string | null
+          over_18: boolean | null
           pay_agreement: string | null
           phone: string | null
           position: string
+          preferred_schedule: string | null
+          race_ethnicity: string | null
           rejection_reason: string | null
           source: string | null
           ssn_last4: string | null
           stage_history: Json
+          start_date: string | null
           state: string | null
           status: string
+          transportation_method: string | null
+          transportation_plan: string | null
           updated_at: string
+          veteran_status: string | null
+          weekend_availability: boolean | null
+          weekly_hours: number | null
+          years_experience: number | null
           zip: string | null
         }
         Insert: {
+          additional_skills?: string | null
           address?: string | null
+          agency_experience?: boolean | null
+          agency_name?: string | null
           applied_at?: string
+          authorized_us?: boolean | null
           availability?: Json | null
           city?: string | null
           counties_willing?: string[] | null
           created_at?: string
           created_by?: string | null
+          disability_status?: string | null
           dob?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           first_name: string
+          gender_at_birth?: string | null
+          has_drivers_license?: boolean | null
+          has_vehicle?: boolean | null
           hired_at?: string | null
           hired_user_id?: string | null
           id?: string
           interviewer?: string | null
           last_name: string
+          middle_name?: string | null
           notes?: string | null
+          over_18?: boolean | null
           pay_agreement?: string | null
           phone?: string | null
           position: string
+          preferred_schedule?: string | null
+          race_ethnicity?: string | null
           rejection_reason?: string | null
           source?: string | null
           ssn_last4?: string | null
           stage_history?: Json
+          start_date?: string | null
           state?: string | null
           status?: string
+          transportation_method?: string | null
+          transportation_plan?: string | null
           updated_at?: string
+          veteran_status?: string | null
+          weekend_availability?: boolean | null
+          weekly_hours?: number | null
+          years_experience?: number | null
           zip?: string | null
         }
         Update: {
+          additional_skills?: string | null
           address?: string | null
+          agency_experience?: boolean | null
+          agency_name?: string | null
           applied_at?: string
+          authorized_us?: boolean | null
           availability?: Json | null
           city?: string | null
           counties_willing?: string[] | null
           created_at?: string
           created_by?: string | null
+          disability_status?: string | null
           dob?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           first_name?: string
+          gender_at_birth?: string | null
+          has_drivers_license?: boolean | null
+          has_vehicle?: boolean | null
           hired_at?: string | null
           hired_user_id?: string | null
           id?: string
           interviewer?: string | null
           last_name?: string
+          middle_name?: string | null
           notes?: string | null
+          over_18?: boolean | null
           pay_agreement?: string | null
           phone?: string | null
           position?: string
+          preferred_schedule?: string | null
+          race_ethnicity?: string | null
           rejection_reason?: string | null
           source?: string | null
           ssn_last4?: string | null
           stage_history?: Json
+          start_date?: string | null
           state?: string | null
           status?: string
+          transportation_method?: string | null
+          transportation_plan?: string | null
           updated_at?: string
+          veteran_status?: string | null
+          weekend_availability?: boolean | null
+          weekly_hours?: number | null
+          years_experience?: number | null
           zip?: string | null
         }
         Relationships: []
