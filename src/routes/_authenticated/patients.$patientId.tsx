@@ -161,8 +161,8 @@ function PatientShell() {
         <aside className="space-y-4 xl:sticky xl:top-44 xl:self-start">
           <div className="border border-border bg-card p-4 space-y-3">
             <div className="aspect-square w-full bg-muted overflow-hidden border border-border grid place-items-center">
-              {p?.photo_url ? (
-                <img src={p.photo_url} alt="Patient" className="w-full h-full object-cover" />
+              {photoSignedUrl ? (
+                <img src={photoSignedUrl} alt="Patient" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-[10px] font-mono uppercase text-muted-foreground">No photo</div>
               )}
