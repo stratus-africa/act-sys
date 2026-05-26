@@ -210,9 +210,14 @@ function ApplicantDetailPage() {
         title={`${a.first_name} ${a.last_name}`}
         description={a.email ?? a.phone ?? ""}
         actions={
-          <select value={a.status} onChange={(e) => updateStatus(e.target.value)} className={"px-3 py-2 border text-xs font-bold uppercase " + (status?.tone === "primary" ? "border-primary text-primary" : status?.tone === "destructive" ? "border-destructive text-destructive" : "border-border")}>
-            {APPLICANT_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
+          <div className="flex items-center gap-2">
+            <Link to="/applicants/$applicantId/onboarding" params={{ applicantId }} className="inline-flex items-center gap-2 text-xs font-mono uppercase border border-primary text-primary px-3 py-2 hover:bg-primary hover:text-primary-foreground">
+              Onboarding Wizard
+            </Link>
+            <select value={a.status} onChange={(e) => updateStatus(e.target.value)} className={"px-3 py-2 border text-xs font-bold uppercase " + (status?.tone === "primary" ? "border-primary text-primary" : status?.tone === "destructive" ? "border-destructive text-destructive" : "border-border")}>
+              {APPLICANT_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
         }
       />
       <div className="p-6 lg:p-8 space-y-6">
